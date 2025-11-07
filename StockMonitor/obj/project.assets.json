@@ -1021,6 +1021,19 @@
           }
         }
       },
+      "Spectre.Console/0.53.0": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/Spectre.Console.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/Spectre.Console.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Sprache/2.3.1": {
         "type": "package",
         "dependencies": {
@@ -3619,6 +3632,25 @@
         "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
         "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.nuspec",
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
+      ]
+    },
+    "Spectre.Console/0.53.0": {
+      "sha512": "m2iv8Egfywp7FaNLKCmCFHbSf36D4ctzZKvlAK9NXMyGLh6L+CnrZWK8o+LOYsoAS1jtoHn0W1BT0W8vuq/FUw==",
+      "type": "package",
+      "path": "spectre.console/0.53.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net8.0/Spectre.Console.dll",
+        "lib/net8.0/Spectre.Console.xml",
+        "lib/net9.0/Spectre.Console.dll",
+        "lib/net9.0/Spectre.Console.xml",
+        "lib/netstandard2.0/Spectre.Console.dll",
+        "lib/netstandard2.0/Spectre.Console.xml",
+        "logo.png",
+        "spectre.console.0.53.0.nupkg.sha512",
+        "spectre.console.nuspec"
       ]
     },
     "Sprache/2.3.1": {
@@ -6763,6 +6795,7 @@
       "MailKit >= 4.11.0",
       "Microsoft.Extensions.Hosting >= 9.0.10",
       "Microsoft.Extensions.Http.Polly >= 9.0.10",
+      "Spectre.Console >= 0.53.0",
       "YahooFinanceApi >= 2.3.3"
     ]
   },
@@ -6831,6 +6864,10 @@
           "Microsoft.Extensions.Http.Polly": {
             "target": "Package",
             "version": "[9.0.10, )"
+          },
+          "Spectre.Console": {
+            "target": "Package",
+            "version": "[0.53.0, )"
           },
           "YahooFinanceApi": {
             "target": "Package",

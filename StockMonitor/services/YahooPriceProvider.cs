@@ -24,7 +24,7 @@ namespace StockMonitor.Services
                 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                 (exception, timeSpan, retryCount, context) =>
                 {
-                    _logger.LogWarning(exception, "Falha ao buscar preço (Tentativa {RetryCount}). Esperando {TimeSpan}s...", retryCount, timeSpan.TotalSeconds);
+                    _logger.LogWarning("Falha ao buscar preço (Tentativa {RetryCount}). Esperando {TimeSpan}s...", retryCount, timeSpan.TotalSeconds);
                 });
         }
 

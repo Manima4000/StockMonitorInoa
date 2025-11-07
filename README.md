@@ -64,11 +64,40 @@ dotnet run -- PETR4 30.50 25.00
 
 Neste exemplo, o aplicativo irá monitorar a ação `PETR4.SA`, enviando um alerta se o preço subir para R$ 30,50 ou mais, ou se cair para R$ 25,00 ou menos.
 
+## Como Funciona
+
+Ao ser executada, a aplicação inicia um loop de monitoramento contínuo que busca o preço do ativo a cada segundo. O console exibe a cotação atual e um gráfico para facilitar a visualização.
+
+### Visualização Gráfica
+
+Um gráfico (gerado usando uma biblioteca de gráficos) é renderizado diretamente no console para mostrar a flutuação do preço em relação aos seus limites.
+
+- **Escala Dinâmica:** O eixo Y (preço) do gráfico não começa do zero. Ele é ajustado dinamicamente para focar no range entre o seu preço de compra e o seu preço de venda, oferecendo uma visualização muito mais clara da ação do preço em torno dos seus limites.
+
+- **Cores dos Limites:**
+
+  - **Linha de Venda (Azul):** Uma linha no topo do gráfico mostrando seu limite de venda.
+
+  - **Linha de Compra (Vermelha):** Uma linha na base do gráfico mostrando seu limite de compra
+
+  - **Preço Atual (Verde):** A linha que se move, mostrando a cotação atual do ativo.
+
+### Lógica de Alertas (Anti-Spam)
+
+A aplicação possui um motor de lógica com estado para enviar alertas de forma inteligente e evitar o envio excessivo de e-mails (spam)
+
+- **Envio Único:** Quando o preço cruza um limite (por exemplo, cai abaixo do preço de compra), um e-mail de alerta é enviado apenas uma vez.
+
+- **Reset de Estado:** Para que um novo alerta de compra seja enviado, o preço precisa primeiro subir de volta acima do limite de compra (resetando o "estado" do alerta) e, em seguida, cair abaixo dele novamente.
+
+- **Exemplo Prático:** Se o preço de compra é R$ 25,00 e a cotação cai para R$ 24,90, você recebe um e-mail. Se o preço continuar caindo para R$ 24,80, você não receberá outro e-mail. No entanto, se o preço subir para R$ 25,10 e depois cair para R$ 24,95, você receberá um segundo e-mail, pois o alerta foi "rearmado". A mesma lógica se aplica ao limite de venda.
+
+
 ## Como Rodar os Testes
 
 O projeto inclui uma suíte de testes unitários e de integração. Para rodar os testes, navegue até a pasta `StockMonitor.Tests` e execute o seguinte comando:
 
 ```bash
 cd ..\StockMonitor.Tests
-dotnet test
+dotnet test --logger "console;verbosity=detailed" 
 ```

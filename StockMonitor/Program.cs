@@ -47,6 +47,8 @@ public class Program
 
                 services.AddSingleton<IAlertingEngine, AlertingEngine>();
 
+                services.AddSingleton<IChartService, SpectreChartService>();
+
                 // 6. Registra nosso loop principal como um serviço de background
                 services.AddHostedService<StockMonitorWorker>();
             })

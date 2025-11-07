@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StockMonitor.Interfaces;
 using StockMonitor.Settings;
+using System.Collections.Generic;
 
 namespace StockMonitor.Workers
 {
@@ -11,8 +12,10 @@ namespace StockMonitor.Workers
         private readonly IPriceProvider _priceProvider;
         private readonly INotificationService _notificationService;
         private readonly MonitorSettings _monitorSettings;
-        private readonly IAlertingEngine _alertingEngine; // <-- NOVO
+        private readonly IAlertingEngine _alertingEngine;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly IChartService _chartService;
+        private readonly List<decimal> _priceHistory = new List<decimal>();
 
         public StockMonitorWorker(
             ILogger<StockMonitorWorker> logger,
@@ -20,7 +23,8 @@ namespace StockMonitor.Workers
             INotificationService notificationService,
             MonitorSettings monitorSettings,
             IAlertingEngine alertingEngine,
-            IHostApplicationLifetime hostApplicationLifetime) 
+            IHostApplicationLifetime hostApplicationLifetime,
+            IChartService chartService) 
         {
             _logger = logger;
             _priceProvider = priceProvider;
@@ -28,6 +32,7 @@ namespace StockMonitor.Workers
             _monitorSettings = monitorSettings;
             _alertingEngine = alertingEngine; 
             _hostApplicationLifetime = hostApplicationLifetime;
+            _chartService = chartService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,6 +43,14 @@ namespace StockMonitor.Workers
                 {
                     decimal precoAtual = await _priceProvider.GetPriceAsync(_monitorSettings.Ticker);
                     _logger.LogInformation("Cotação atual de {Ticker}: {Preco}", _monitorSettings.Ticker, precoAtual);
+
+                    _priceHistory.Add(precoAtual);
+                    if (_priceHistory.Count > 10)
+                    {
+                        _priceHistory.RemoveAt(0);
+                    }
+
+                    _chartService.DisplayPriceChart(_monitorSettings.Ticker, _priceHistory, _monitorSettings.SellPrice, _monitorSettings.BuyPrice);
 
                     // Delega a decisão para a classe de lógica
                     var decision = _alertingEngine.CheckPrice(precoAtual);
