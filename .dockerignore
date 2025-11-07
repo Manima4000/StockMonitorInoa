@@ -1,0 +1,11 @@
+# Ignora o arquivo de segredos
+.env
+**/.env
+
+# Ignora arquivos do Git
+.git
+.gitignore
+
+# Ignora pastas de build e teste
+**/bin/
+**/obj/

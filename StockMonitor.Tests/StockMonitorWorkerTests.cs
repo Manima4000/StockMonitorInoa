@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+#nullable disable
 namespace StockMonitor.Tests;
 
 public class StockMonitorWorkerTests

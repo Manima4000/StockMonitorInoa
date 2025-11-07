@@ -30,7 +30,8 @@ As configurações do servidor de e-mail (SMTP) são carregadas a partir do arqu
     "EmailDestino": "seu-email-de-destino@exemplo.com",
     "SmtpServidor": "smtp.seuprovedor.com",
     "SmtpPorta": 587,
-    "SmtpUsuario": "seu-usuario-smtp@exemplo.com"
+    "SmtpUsuario": "seu-usuario-smtp@exemplo.com",
+    "SmtpSenha": "" //Deixar desse jeito mesmo
   }
 }
 ```
@@ -47,24 +48,89 @@ SmtpSettings__SmtpSenha=sua-senha-smtp-aqui (sem aspas)
 
 **Importante:** O arquivo `.env` está no `.gitignore` e não deve ser enviado para o repositório.
 
-## Como Rodar
+
+
+## Como Rodar Localmente
+
+
 
 O aplicativo é executado a partir da linha de comando, e você precisa fornecer três argumentos:
 
+
+
 1.  **Ativo:** O ticker da ação que você quer monitorar (ex: `PETR4` para Petrobras).
+
 2.  **Preço de Venda:** O preço acima do qual um alerta de venda deve ser enviado.
+
 3.  **Preço de Compra:** O preço abaixo do qual um alerta de compra deve ser enviado.
+
+
 
 Para rodar o aplicativo, navegue até a pasta `StockMonitor` e use o comando `dotnet run`:
 
+
+
 ```bash
+
 cd StockMonitor
-dotnet run -- PETR4 30.50 25.00
+
+dotnet run -- PETR4 40.00 32.00
+
 ```
 
-Neste exemplo, o aplicativo irá monitorar a ação `PETR4.SA`, enviando um alerta se o preço subir para R$ 30,50 ou mais, ou se cair para R$ 25,00 ou menos.
+
+
+Neste exemplo, o aplicativo irá monitorar a ação `PETR4.SA`, enviando um alerta se o preço subir para R$ 40,00 ou mais, ou se cair para R$ 32,00 ou menos.
+
+
+
+## Como Rodar com Docker
+
+
+
+Você pode rodar o aplicativo usando Docker. Certifique-se de ter o Docker instalado em sua máquina.
+
+
+
+### 1. Construir a Imagem Docker
+
+
+
+Navegue até o diretório raiz do projeto (`Project Inoa`) e construa a imagem Docker:
+
+
+
+```bash
+
+docker build -t stockmonitor .
+
+```
+
+
+
+### 2. Executar o Contêiner Docker
+
+
+
+Para executar o contêiner, você precisará de um arquivo `.env` na pasta `StockMonitor` (conforme descrito na seção "2. Senha do SMTP"). O comando de execução é:
+
+
+
+```bash
+
+docker run --rm -it --env-file StockMonitor/.env stockmonitor "ATIVO" "PREÇO VENDA" "PREÇO COMPRA"
+
+```
+
+
+
+Neste exemplo, o contêiner irá monitorar a ação `ATIVO`, enviando um alerta se o preço subir para `PREÇO VENDA` ou mais, ou se cair para `PREÇO COMPRA` ou menos.
+
+
 
 ## Como Funciona
+
+
 
 Ao ser executada, a aplicação inicia um loop de monitoramento contínuo que busca o preço do ativo a cada segundo. O console exibe a cotação atual e um gráfico para facilitar a visualização.
 

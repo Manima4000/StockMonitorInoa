@@ -12,7 +12,7 @@ public class Program
 {
     public static async Task Main(string[] args)
     {   
-        Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
+        Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
         if (args.Length != 3)
         {
             Console.WriteLine("Uso (na pasta /StockMonitor/): dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>");
