@@ -12,7 +12,7 @@ Este é um aplicativo de console .NET que monitora o preço de uma ação e envi
 Clone o repositório para sua máquina local:
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
+git clone https://github.com/Manima4000/StockMonitorInoa
 cd Project Inoa
 ```
 
