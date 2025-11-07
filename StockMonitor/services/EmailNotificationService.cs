@@ -29,21 +29,19 @@ namespace StockMonitor.Services
 
             try
             {
-                using (SmtpClient client = new SmtpClient(_settings.SmtpServidor, _settings.SmtpPorta))
-                {
-                    client.Credentials = new NetworkCredential(_settings.SmtpUsuario, _settings.SmtpSenha);
-                    client.EnableSsl = true;
+                using SmtpClient client = new SmtpClient(_settings.SmtpServidor, _settings.SmtpPorta);
+                client.Credentials = new NetworkCredential(_settings.SmtpUsuario, _settings.SmtpSenha);
+                client.EnableSsl = true;
 
-                    MailMessage mail = new MailMessage();
-                    mail.From = new MailAddress(_settings.SmtpUsuario);
-                    mail.To.Add(_settings.EmailDestino);
-                    mail.Subject = subject;
-                    mail.Body = body;
-                    
-                    await client.SendMailAsync(mail); // Usando SendMailAsync
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(_settings.SmtpUsuario);
+                mail.To.Add(_settings.EmailDestino);
+                mail.Subject = subject;
+                mail.Body = body;
 
-                    _logger.LogInformation("Alerta enviado por e-mail para {Destino}.", _settings.EmailDestino);
-                }
+                await client.SendMailAsync(mail); 
+
+                _logger.LogInformation("Alerta enviado por e-mail para {Destino}.", _settings.EmailDestino);
             }
             catch (Exception ex)
             {

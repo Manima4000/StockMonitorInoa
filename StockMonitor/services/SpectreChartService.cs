@@ -6,8 +6,6 @@ namespace StockMonitor.Services
 {
     public class SpectreChartService : IChartService
     {
-        private int _priceHistoryCounter = 0;
-
         public void DisplayPriceChart(string ticker, List<decimal> priceHistory, decimal sellPrice, decimal buyPrice)
         {
             if (priceHistory.Count == 0) return;
@@ -42,7 +40,7 @@ namespace StockMonitor.Services
                 .Label($"[green bold underline]Histórico de Preços de {ticker}[/]")
                 .CenterLabel()
                 .WithMaxValue(100) // Normalizado para 0-100
-                .HideValues(); // Remove os números amarelos ao lado das barras
+                .HideValues();
 
             foreach (var price in priceHistory)
             {
@@ -56,14 +54,10 @@ namespace StockMonitor.Services
                     color = Color.Blue;
                 }
 
-                // Normalização correta: quanto maior o preço, maior a barra
-                // A fórmula garante que a proporção seja mantida
-                decimal normalizedValue = ((price - chartMinValue) / priceRange) * 100;
+                decimal normalizedValue = (price - chartMinValue) / priceRange * 100;
                 
-                // Garante que o valor está entre 0 e 100
                 normalizedValue = Math.Max(0, Math.Min(100, normalizedValue));
                 
-                // Mostra o preço real como label
                 chart.AddItem(price.ToString("F2"), (double)normalizedValue, color);
             }
 

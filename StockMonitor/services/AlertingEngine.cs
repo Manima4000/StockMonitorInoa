@@ -8,8 +8,6 @@ namespace StockMonitor.Services
     {
         private readonly MonitorSettings _settings;
         private readonly ILogger<AlertingEngine> _logger;
-        
-        // O ESTADO AGORA VIVE AQUI, ISOLADO!
         private bool _sellAlertSent = false;
         private bool _buyAlertSent = false;
 

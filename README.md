@@ -39,7 +39,7 @@ As configurações do servidor de e-mail (SMTP) são carregadas a partir do arqu
 
 Por razões de segurança, a senha do SMTP não é armazenada no `appsettings.json`. Em vez disso, ela é carregada a partir de um arquivo `.env`.
 
-Crie um arquivo chamado `.env` dentro da pasta projeto (`Project Inoa/.env`) e adicione a seguinte linha:
+Crie um arquivo chamado `.env` dentro da pasta projeto (`Project Inoa/StockMonitor/.env`) e adicione a seguinte linha:
 
 ```
 SmtpSettings__SmtpSenha=sua-senha-smtp-aqui (sem aspas)
@@ -80,7 +80,7 @@ Um gráfico (gerado usando uma biblioteca de gráficos) é renderizado diretamen
 
   - **Linha de Compra (Vermelha):** Uma linha na base do gráfico mostrando seu limite de compra
 
-  - **Preço Atual (Verde):** A linha que se move, mostrando a cotação atual do ativo.
+  - **Preço Atual (Amarela):** A linha que se move, mostrando a cotação atual do ativo.
 
 ### Lógica de Alertas (Anti-Spam)
 

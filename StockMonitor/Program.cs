@@ -15,7 +15,7 @@ public class Program
         Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
         if (args.Length != 3)
         {
-            Console.WriteLine("Uso: dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>");
+            Console.WriteLine("Uso (na pasta /StockMonitor/): dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>");
             return;
         }
 

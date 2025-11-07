@@ -122,3 +122,4 @@ C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor\obj\Debug\ne
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor\obj\Debug\net9.0\ref\StockMonitor.dll
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor\bin\Debug\net9.0\appsettings.json
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor\bin\Debug\net9.0\Spectre.Console.dll
+C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor\bin\Debug\net9.0\.env
