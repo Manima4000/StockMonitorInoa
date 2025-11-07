@@ -12,7 +12,7 @@ public class Program
 {
     public static async Task Main(string[] args)
     {   
-        Env.Load();
+        Env.Load(Path.Combine(AppContext.BaseDirectory, ".env"));
         if (args.Length != 3)
         {
             Console.WriteLine("Uso: dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>");
@@ -27,9 +27,9 @@ public class Program
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
-                // Adiciona explicitamente os User Secrets (requer o pacote Microsoft.Extensions.Configuration.UserSecrets)
-                // Isso garante que ele seja carregado.
-                config.AddUserSecrets<Program>();
+                config.SetBasePath(AppContext.BaseDirectory);
+                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                config.AddEnvironmentVariables();
             })
             .ConfigureServices((hostContext, services) =>
             {

@@ -12,19 +12,22 @@ namespace StockMonitor.Workers
         private readonly INotificationService _notificationService;
         private readonly MonitorSettings _monitorSettings;
         private readonly IAlertingEngine _alertingEngine; // <-- NOVO
+        private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
         public StockMonitorWorker(
             ILogger<StockMonitorWorker> logger,
             IPriceProvider priceProvider,
             INotificationService notificationService,
             MonitorSettings monitorSettings,
-            IAlertingEngine alertingEngine) 
+            IAlertingEngine alertingEngine,
+            IHostApplicationLifetime hostApplicationLifetime) 
         {
             _logger = logger;
             _priceProvider = priceProvider;
             _notificationService = notificationService;
             _monitorSettings = monitorSettings;
             _alertingEngine = alertingEngine; 
+            _hostApplicationLifetime = hostApplicationLifetime;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,9 +56,14 @@ namespace StockMonitor.Workers
                         await _notificationService.SendNotificationAsync(subject, body);
                     }
                 }
-                catch (Exception ex)
+                catch (KeyNotFoundException)
                 {
-                    _logger.LogError(ex, "Erro no loop de monitoramento. Tentando novamente em 60s.");
+                    _logger.LogError("O ticker {Ticker} é inválido ou não foi encontrado. A aplicação será encerrada.", _monitorSettings.Ticker);
+                    _hostApplicationLifetime.StopApplication();
+                }
+                catch (Exception)
+                {
+                    _logger.LogError("Erro no loop de monitoramento. Tentando novamente em 60s.");
                     await Task.Delay(60000, stoppingToken);
                 }
                 

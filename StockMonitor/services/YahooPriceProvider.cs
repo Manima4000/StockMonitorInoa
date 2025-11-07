@@ -20,11 +20,10 @@ namespace StockMonitor.Services
             // Tentar 3 vezes.
             // Esperar 2, 4, e 8 segundos entre as tentativas (exponential backoff)
             _retryPolicy = Policy
-                .Handle<Exception>() // Captura qualquer exceção
+                .Handle<Exception>(ex => ex is not KeyNotFoundException) 
                 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                 (exception, timeSpan, retryCount, context) =>
                 {
-                    // Loga cada tentativa falha
                     _logger.LogWarning(exception, "Falha ao buscar preço (Tentativa {RetryCount}). Esperando {TimeSpan}s...", retryCount, timeSpan.TotalSeconds);
                 });
         }
@@ -38,15 +37,22 @@ namespace StockMonitor.Services
                 decimal price = await _retryPolicy.ExecuteAsync(async () =>
                 {
                     var securities = await Yahoo.Symbols(ticker).Fields(Field.RegularMarketPrice).QueryAsync();
-                    return (decimal)securities[ticker].RegularMarketPrice;
+                    if (securities.TryGetValue(ticker, out var security) && security != null && security.RegularMarketPrice > 0)
+                    {
+                        return (decimal)security.RegularMarketPrice;
+                    }
+                    else
+                    {
+                        throw new KeyNotFoundException($"O ticker '{ticker}' é inválido ou não foi encontrado.");
+                    }
                 });
 
                 return price;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Se o Polly desistir (após 3 falhas), ele lança a exceção original.
-                _logger.LogError(ex, "Não foi possível obter cotação para {Ticker} após 3 tentativas.", ticker);
+                _logger.LogError("Não foi possível obter cotação para {Ticker} após 3 tentativas.", ticker);
                 throw; // Relança para o Worker tratar (que vai esperar 60s)
             }
         }
