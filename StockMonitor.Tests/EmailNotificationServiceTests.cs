@@ -9,7 +9,7 @@ namespace StockMonitor.Tests;
 
 public class EmailNotificationServiceTests
 {
-    [Fact]
+    [Fact(DisplayName = "Deve registrar um erro quando a senha do SMTP está faltando")]
     public async Task SendNotificationAsync_WhenSmtpPasswordIsMissing_ShouldLogError()
     {
         // Arrange

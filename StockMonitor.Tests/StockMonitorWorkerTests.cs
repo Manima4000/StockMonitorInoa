@@ -21,6 +21,7 @@ public class StockMonitorWorkerTests
     private readonly Mock<IAlertingEngine> _mockAlertingEngine;
     private readonly MonitorSettings _monitorSettings;
     private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
+    private readonly Mock<IChartService> _mockChartService;
 
     public StockMonitorWorkerTests()
     {
@@ -30,9 +31,10 @@ public class StockMonitorWorkerTests
         _mockAlertingEngine = new Mock<IAlertingEngine>();
         _monitorSettings = new MonitorSettings("PETR4", 30, 25);
         _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
+        _mockChartService = new Mock<IChartService>();
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve enviar notificação de venda quando o AlertingEngine retornar 'SendSell'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsSendSell_ShouldSendNotification()
     {
         // Arrange
@@ -46,7 +48,8 @@ public class StockMonitorWorkerTests
             _mockNotificationService.Object,
             _monitorSettings,
             _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockChartService.Object);
 
         var cts = new CancellationTokenSource();
 
@@ -66,7 +69,7 @@ public class StockMonitorWorkerTests
         await workerTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve enviar notificação de compra quando o AlertingEngine retornar 'SendBuy'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsSendBuy_ShouldSendNotification()
     {
         // Arrange
@@ -80,7 +83,8 @@ public class StockMonitorWorkerTests
             _mockNotificationService.Object,
             _monitorSettings,
             _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockChartService.Object);
 
         var cts = new CancellationTokenSource();
 
@@ -100,7 +104,7 @@ public class StockMonitorWorkerTests
         await workerTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Não deve enviar notificação quando o AlertingEngine retornar 'Hold'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsHold_ShouldNotSendNotification()
     {
         // Arrange
@@ -114,7 +118,8 @@ public class StockMonitorWorkerTests
             _mockNotificationService.Object,
             _monitorSettings,
             _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockChartService.Object);
 
         var cts = new CancellationTokenSource();
 
@@ -131,7 +136,7 @@ public class StockMonitorWorkerTests
         await workerTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve registrar um erro quando o PriceProvider lançar uma exceção")]
     public async Task ExecuteAsync_WhenPriceProviderThrowsException_ShouldLogError()
     {
         // Arrange
@@ -144,7 +149,8 @@ public class StockMonitorWorkerTests
             _mockNotificationService.Object,
             _monitorSettings,
             _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockChartService.Object);
 
         var cts = new CancellationTokenSource();
 
@@ -166,7 +172,7 @@ public class StockMonitorWorkerTests
         await workerTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve registrar um erro e parar a aplicação quando o PriceProvider lançar KeyNotFoundException")]
     public async Task ExecuteAsync_WhenPriceProviderThrowsKeyNotFoundException_ShouldLogErrorAndStopApplication()
     {
         // Arrange
@@ -179,7 +185,8 @@ public class StockMonitorWorkerTests
             _mockNotificationService.Object,
             _monitorSettings,
             _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockChartService.Object);
 
         var cts = new CancellationTokenSource();
 

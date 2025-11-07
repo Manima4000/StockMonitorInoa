@@ -18,7 +18,7 @@ public class AlertingEngineTests
         _settings = new MonitorSettings("TEST", 100, 80);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda")]
     public void CheckPrice_WhenPriceIsAboveSellThreshold_ShouldReturnSendSell()
     {
         // Arrange
@@ -32,7 +32,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.SendSell, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está acima do limite de venda e o alerta já foi enviado")]
     public void CheckPrice_WhenPriceIsAboveSellThresholdAndAlertSent_ShouldReturnHold()
     {
         // Arrange
@@ -46,7 +46,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.Hold, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve retornar 'SendBuy' quando o preço está abaixo do limite de compra")]
     public void CheckPrice_WhenPriceIsBelowBuyThreshold_ShouldReturnSendBuy()
     {
         // Arrange
@@ -60,7 +60,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.SendBuy, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está abaixo do limite de compra e o alerta já foi enviado")]
     public void CheckPrice_WhenPriceIsBelowBuyThresholdAndAlertSent_ShouldReturnHold()
     {
         // Arrange
@@ -74,7 +74,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.Hold, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve resetar o alerta de venda quando o preço volta ao normal")]
     public void CheckPrice_WhenPriceDropsBelowSellThreshold_ShouldResetSellAlert()
     {
         // Arrange
@@ -89,7 +89,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.SendSell, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve resetar o alerta de compra quando o preço volta ao normal")]
     public void CheckPrice_WhenPriceRisesAboveBuyThreshold_ShouldResetBuyAlert()
     {
         // Arrange
@@ -104,7 +104,7 @@ public class AlertingEngineTests
         Assert.Equal(AlertDecision.SendBuy, decision);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está entre os limites")]
     public void CheckPrice_WhenPriceIsBetweenThresholds_ShouldReturnHold()
     {
         // Arrange

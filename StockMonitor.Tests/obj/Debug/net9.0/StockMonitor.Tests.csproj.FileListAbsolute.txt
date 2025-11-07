@@ -152,3 +152,4 @@ C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor.Tests\obj\De
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor.Tests\obj\Debug\net9.0\StockMonitor.Tests.pdb
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor.Tests\obj\Debug\net9.0\StockMonitor.Tests.genruntimeconfig.cache
 C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor.Tests\obj\Debug\net9.0\ref\StockMonitor.Tests.dll
+C:\Users\matan\OneDrive\Documentos\GitHub\Project Inoa\StockMonitor.Tests\bin\Debug\net9.0\Spectre.Console.dll

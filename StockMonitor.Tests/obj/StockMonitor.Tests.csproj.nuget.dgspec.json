@@ -157,6 +157,10 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Spectre.Console": {
+              "target": "Package",
+              "version": "[0.53.0, )"
+            },
             "YahooFinanceApi": {
               "target": "Package",
               "version": "[2.3.3, )"

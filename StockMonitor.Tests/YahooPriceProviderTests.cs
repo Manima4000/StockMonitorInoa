@@ -6,7 +6,7 @@ namespace StockMonitor.Tests;
 
 public class YahooPriceProviderTests
 {
-    [Fact]
+    [Fact(DisplayName = "Deve retornar um preço maior que zero para um ticker válido")]
     // Isso é um teste de integração, pois ele depende de um serviço externo (API do Yahoo Finance)
     // e requer uma conexão com a internet para ser executado com sucesso.
     public async Task GetPriceAsync_WithValidTicker_ShouldReturnPriceGreaterThanZero()
