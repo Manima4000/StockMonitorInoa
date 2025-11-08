@@ -58,7 +58,7 @@ public class Program
     {
         try
         {
-            string ticker = args[0];
+            string ticker = args[0].ToUpperInvariant();
             decimal sellPrice = decimal.Parse(args[1], CultureInfo.InvariantCulture);
             decimal buyPrice = decimal.Parse(args[2], CultureInfo.InvariantCulture);
 

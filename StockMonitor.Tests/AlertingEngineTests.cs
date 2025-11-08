@@ -21,100 +21,79 @@ public class AlertingEngineTests
     [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda")]
     public void CheckPrice_WhenPriceIsAboveSellThreshold_ShouldReturnSendSell()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
         var currentPrice = 101;
 
-        // Act
         var decision = engine.CheckPrice(currentPrice);
 
-        // Assert
         Assert.Equal(AlertDecision.SendSell, decision);
     }
 
     [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está acima do limite de venda e o alerta já foi enviado")]
     public void CheckPrice_WhenPriceIsAboveSellThresholdAndAlertSent_ShouldReturnHold()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
         engine.CheckPrice(101); // Send first alert
 
-        // Act
         var decision = engine.CheckPrice(102);
 
-        // Assert
         Assert.Equal(AlertDecision.Hold, decision);
     }
 
     [Fact(DisplayName = "Deve retornar 'SendBuy' quando o preço está abaixo do limite de compra")]
     public void CheckPrice_WhenPriceIsBelowBuyThreshold_ShouldReturnSendBuy()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
         var currentPrice = 79;
 
-        // Act
         var decision = engine.CheckPrice(currentPrice);
 
-        // Assert
         Assert.Equal(AlertDecision.SendBuy, decision);
     }
 
     [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está abaixo do limite de compra e o alerta já foi enviado")]
     public void CheckPrice_WhenPriceIsBelowBuyThresholdAndAlertSent_ShouldReturnHold()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(79); // Send first alert
+        engine.CheckPrice(79); 
 
-        // Act
         var decision = engine.CheckPrice(78);
 
-        // Assert
         Assert.Equal(AlertDecision.Hold, decision);
     }
 
     [Fact(DisplayName = "Deve resetar o alerta de venda quando o preço volta ao normal")]
     public void CheckPrice_WhenPriceDropsBelowSellThreshold_ShouldResetSellAlert()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(101); // Send first sell alert
+        engine.CheckPrice(101); 
 
-        // Act
-        engine.CheckPrice(99); // Price drops
-        var decision = engine.CheckPrice(101); // Price goes up again
+        engine.CheckPrice(99);
+        var decision = engine.CheckPrice(101); 
 
-        // Assert
         Assert.Equal(AlertDecision.SendSell, decision);
     }
 
     [Fact(DisplayName = "Deve resetar o alerta de compra quando o preço volta ao normal")]
     public void CheckPrice_WhenPriceRisesAboveBuyThreshold_ShouldResetBuyAlert()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(79); // Send first buy alert
+        engine.CheckPrice(79);
 
-        // Act
-        engine.CheckPrice(81); // Price rises
-        var decision = engine.CheckPrice(79); // Price drops again
+        engine.CheckPrice(81); 
+        var decision = engine.CheckPrice(79);
 
-        // Assert
         Assert.Equal(AlertDecision.SendBuy, decision);
     }
 
     [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está entre os limites")]
     public void CheckPrice_WhenPriceIsBetweenThresholds_ShouldReturnHold()
     {
-        // Arrange
         var engine = new AlertingEngine(_settings, _mockLogger.Object);
         var currentPrice = 90;
 
-        // Act
         var decision = engine.CheckPrice(currentPrice);
 
-        // Assert
         Assert.Equal(AlertDecision.Hold, decision);
     }
 }

@@ -38,7 +38,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve enviar notificação de venda quando o AlertingEngine retornar 'SendSell'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsSendSell_ShouldSendNotification()
     {
-        // Arrange
         var price = 31m;
         _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
         _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.SendSell);
@@ -54,12 +53,10 @@ public class StockMonitorWorkerTests
 
         var cts = new CancellationTokenSource();
 
-        // Act
         var workerTask = worker.StartAsync(cts.Token);
         await Task.Delay(100);
         cts.Cancel();
 
-        // Assert
         var expectedSubject = "Alerta de Venda - PETR4.SA";
         var expectedBody = $"O preço de PETR4.SA subiu para {price}, acima do limite de {_monitorSettings.SellPrice}";
 
@@ -73,7 +70,7 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve enviar notificação de compra quando o AlertingEngine retornar 'SendBuy'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsSendBuy_ShouldSendNotification()
     {
-        // Arrange
+
         var price = 24m;
         _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
         _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.SendBuy);
@@ -89,12 +86,12 @@ public class StockMonitorWorkerTests
 
         var cts = new CancellationTokenSource();
 
-        // Act
+
         var workerTask = worker.StartAsync(cts.Token);
         await Task.Delay(100);
         cts.Cancel();
 
-        // Assert
+
         var expectedSubject = "Alerta de Compra - PETR4.SA";
         var expectedBody = $"O preço de PETR4.SA caiu para {price}, abaixo do limite de {_monitorSettings.BuyPrice}";
 
@@ -108,7 +105,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Não deve enviar notificação quando o AlertingEngine retornar 'Hold'")]
     public async Task ExecuteAsync_WhenAlertingEngineReturnsHold_ShouldNotSendNotification()
     {
-        // Arrange
         var price = 28m;
         _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
         _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.Hold);
@@ -124,12 +120,10 @@ public class StockMonitorWorkerTests
 
         var cts = new CancellationTokenSource();
 
-        // Act
         var workerTask = worker.StartAsync(cts.Token);
         await Task.Delay(100);
         cts.Cancel();
 
-        // Assert
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
@@ -140,7 +134,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve registrar um erro quando o PriceProvider lançar uma exceção")]
     public async Task ExecuteAsync_WhenPriceProviderThrowsException_ShouldLogError()
     {
-        // Arrange
         var exception = new Exception("Test Exception");
         _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ThrowsAsync(exception);
 
@@ -155,12 +148,10 @@ public class StockMonitorWorkerTests
 
         var cts = new CancellationTokenSource();
 
-        // Act
         var workerTask = worker.StartAsync(cts.Token);
         await Task.Delay(100);
         cts.Cancel();
 
-        // Assert
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -176,7 +167,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve registrar um erro e parar a aplicação quando o PriceProvider lançar KeyNotFoundException")]
     public async Task ExecuteAsync_WhenPriceProviderThrowsKeyNotFoundException_ShouldLogErrorAndStopApplication()
     {
-        // Arrange
         var exception = new KeyNotFoundException("Test KeyNotFoundException");
         _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ThrowsAsync(exception);
 
@@ -191,13 +181,10 @@ public class StockMonitorWorkerTests
 
         var cts = new CancellationTokenSource();
 
-        // Act
         var workerTask = worker.StartAsync(cts.Token);
         await Task.Delay(100);
         cts.Cancel();
 
-        // Assert
-        // Verificar se o LogError foi chamado com a mensagem certa
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -207,7 +194,6 @@ public class StockMonitorWorkerTests
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.Once);
 
-        // Verificar se o StopApplication foi chamado
         _mockHostApplicationLifetime.Verify(h => h.StopApplication(), Times.Once);
 
         await workerTask;

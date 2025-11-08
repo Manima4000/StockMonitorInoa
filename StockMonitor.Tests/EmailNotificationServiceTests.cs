@@ -12,7 +12,6 @@ public class EmailNotificationServiceTests
     [Fact(DisplayName = "Deve registrar um erro quando a senha do SMTP está faltando")]
     public async Task SendNotificationAsync_WhenSmtpPasswordIsMissing_ShouldLogError()
     {
-        // Arrange
         var mockLogger = new Mock<ILogger<EmailNotificationService>>();
                 var smtpSettings = new SmtpSettings
         {
@@ -26,10 +25,8 @@ public class EmailNotificationServiceTests
 
         var notificationService = new EmailNotificationService(mockOptions.Object, mockLogger.Object);
 
-        // Act
         await notificationService.SendNotificationAsync("Test Subject", "Test Body");
 
-        // Assert
                 mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,

@@ -15,10 +15,6 @@ namespace StockMonitor.Services
         public YahooPriceProvider(ILogger<YahooPriceProvider> logger)
         {
             _logger = logger;
-
-            // Configura a política de retry:
-            // Tentar 3 vezes.
-            // Esperar 2, 4, e 8 segundos entre as tentativas (exponential backoff)
             _retryPolicy = Policy
                 .Handle<Exception>(ex => ex is not KeyNotFoundException) 
                 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -29,9 +25,8 @@ namespace StockMonitor.Services
         }
 
         public async Task<decimal> GetPriceAsync(string ticker)
-        {
-            // Agora, em vez de um try-catch simples, usamos a política:
-            // "Execute a ação a seguir dentro da nossa política de retry"
+        {   
+            ticker = ticker.ToUpperInvariant();
             try
             {
                 decimal price = await _retryPolicy.ExecuteAsync(async () =>
@@ -51,7 +46,6 @@ namespace StockMonitor.Services
             }
             catch (Exception)
             {
-                // Se o Polly desistir (após 3 falhas), ele lança a exceção original.
                 _logger.LogError("Não foi possível obter cotação para {Ticker} após 3 tentativas.", ticker);
                 throw; // Relança para o Worker tratar (que vai esperar 60s)
             }
