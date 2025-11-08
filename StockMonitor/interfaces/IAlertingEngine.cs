@@ -1,6 +1,5 @@
 namespace StockMonitor.Interfaces
 {
-    // Define um contrato para a nossa lógica de decisão
     public interface IAlertingEngine
     {
         // Recebe o preço atual e as regras
@@ -8,7 +7,6 @@ namespace StockMonitor.Interfaces
         AlertDecision CheckPrice(decimal currentPrice);
     }
 
-    // Um "enum" para as decisões
     public enum AlertDecision
     {
         SendBuy,

@@ -15,15 +15,15 @@ public class Program
         Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
         if (args.Length != 3)
         {
-            Console.WriteLine("Uso (na pasta /StockMonitor/): dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>");
+            Console.WriteLine("CASO 1 - (Pasta /StockMonitor/) - COMANDO: dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>\nCASO 2 - (Pasta /Project Inoa/) - COMANDO: docker run --rm -it --env-file StockMonitor/.env stockmonitor <ATIVO> <PREÇO VENDA> <PREÇO COMPRA>");
             return;
         }
 
-        // 1. Parse dos argumentos da linha de comando
+        //Parse dos argumentos da linha de comando
         var monitorSettings = ParseMonitorSettings(args);
         if (monitorSettings == null) return;
 
-        // 2. Criação do Host Genérico (padrão .NET moderno)
+        //Criação do Host Genérico 
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
@@ -33,23 +33,19 @@ public class Program
             })
             .ConfigureServices((hostContext, services) =>
             {
-                // 3. Carrega SmtpSettings do appsettings.json e User Secrets
+                //Carrega SmtpSettings do appsettings.json e User Secrets
                 services.Configure<SmtpSettings>(hostContext.Configuration.GetSection("SmtpSettings"));
 
-                // 4. Registra os argumentos (MonitorSettings) como um singleton
+                //Registra os argumentos (MonitorSettings) como um singleton
                 services.AddSingleton(monitorSettings);
 
-                // 5. Injeção de Dependência: Registra nossas classes
-                // Quando alguém pedir um "IPriceProvider", entregue um "YahooPriceProvider"
+                //Injeção de Dependência: Registra nossas classes
                 services.AddSingleton<IPriceProvider, YahooPriceProvider>();
-                // Quando alguém pedir um "INotificationService", entregue um "EmailNotificationService"
                 services.AddSingleton<INotificationService, EmailNotificationService>();
-
                 services.AddSingleton<IAlertingEngine, AlertingEngine>();
-
                 services.AddSingleton<IChartService, SpectreChartService>();
 
-                // 6. Registra nosso loop principal como um serviço de background
+                //Registra nosso loop principal como um serviço de background
                 services.AddHostedService<StockMonitorWorker>();
             })
             .Build();
