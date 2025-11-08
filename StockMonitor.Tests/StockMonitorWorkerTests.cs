@@ -23,6 +23,7 @@ public class StockMonitorWorkerTests
     private readonly MonitorSettings _monitorSettings;
     private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
     private readonly Mock<IChartService> _mockChartService;
+    private readonly Mock<ITechnicalAnalysisService> _mockTechnicalAnalysisService;
 
     public StockMonitorWorkerTests()
     {
@@ -30,9 +31,18 @@ public class StockMonitorWorkerTests
         _mockPriceProvider = new Mock<IPriceProvider>();
         _mockNotificationService = new Mock<INotificationService>();
         _mockAlertingEngine = new Mock<IAlertingEngine>();
-        _monitorSettings = new MonitorSettings("PETR4", 30, 25);
+        _monitorSettings = new MonitorSettings("PETR4", 30, 25, 5); // Added SMA period
         _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
         _mockChartService = new Mock<IChartService>();
+        _mockTechnicalAnalysisService = new Mock<ITechnicalAnalysisService>();
+
+        // Setup chart service to accept the new method signature
+        _mockChartService.Setup(c => c.DisplayPriceChart(
+            It.IsAny<string>(),
+            It.IsAny<List<decimal>>(),
+            It.IsAny<decimal>(),
+            It.IsAny<decimal>(),
+            It.IsAny<decimal>())); // New SMA parameter
     }
 
     [Fact(DisplayName = "Deve enviar notificação de venda quando o AlertingEngine retornar 'SendSell'")]
@@ -49,7 +59,8 @@ public class StockMonitorWorkerTests
             _monitorSettings,
             _mockAlertingEngine.Object,
             _mockHostApplicationLifetime.Object,
-            _mockChartService.Object);
+            _mockChartService.Object,
+            _mockTechnicalAnalysisService.Object); // Added new service
 
         var cts = new CancellationTokenSource();
 
@@ -57,8 +68,8 @@ public class StockMonitorWorkerTests
         await Task.Delay(100);
         cts.Cancel();
 
-        var expectedSubject = "Alerta de Venda - PETR4.SA";
-        var expectedBody = $"O preço de PETR4.SA subiu para {price}, acima do limite de {_monitorSettings.SellPrice}";
+        var expectedSubject = $"Sell Alert - {_monitorSettings.Ticker}";
+        var expectedBody = $"The price of {_monitorSettings.Ticker} rose to {price}, above the limit of {_monitorSettings.SellPrice}";
 
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(expectedSubject, expectedBody),
@@ -82,7 +93,8 @@ public class StockMonitorWorkerTests
             _monitorSettings,
             _mockAlertingEngine.Object,
             _mockHostApplicationLifetime.Object,
-            _mockChartService.Object);
+            _mockChartService.Object,
+            _mockTechnicalAnalysisService.Object); // Added new service
 
         var cts = new CancellationTokenSource();
 
@@ -92,8 +104,8 @@ public class StockMonitorWorkerTests
         cts.Cancel();
 
 
-        var expectedSubject = "Alerta de Compra - PETR4.SA";
-        var expectedBody = $"O preço de PETR4.SA caiu para {price}, abaixo do limite de {_monitorSettings.BuyPrice}";
+        var expectedSubject = $"Buy Alert - {_monitorSettings.Ticker}";
+        var expectedBody = $"The price of {_monitorSettings.Ticker} dropped to {price}, below the limit of {_monitorSettings.BuyPrice}";
 
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(expectedSubject, expectedBody),
@@ -116,7 +128,8 @@ public class StockMonitorWorkerTests
             _monitorSettings,
             _mockAlertingEngine.Object,
             _mockHostApplicationLifetime.Object,
-            _mockChartService.Object);
+            _mockChartService.Object,
+            _mockTechnicalAnalysisService.Object); // Added new service
 
         var cts = new CancellationTokenSource();
 
@@ -144,7 +157,8 @@ public class StockMonitorWorkerTests
             _monitorSettings,
             _mockAlertingEngine.Object,
             _mockHostApplicationLifetime.Object,
-            _mockChartService.Object);
+            _mockChartService.Object,
+            _mockTechnicalAnalysisService.Object); // Added new service
 
         var cts = new CancellationTokenSource();
 
@@ -156,8 +170,8 @@ public class StockMonitorWorkerTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Erro no loop de monitoramento. Tentando novamente em 60s.")),
-                null,
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error in the monitoring loop. Trying again in 60s.")),
+                It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.Once);
 
@@ -177,7 +191,8 @@ public class StockMonitorWorkerTests
             _monitorSettings,
             _mockAlertingEngine.Object,
             _mockHostApplicationLifetime.Object,
-            _mockChartService.Object);
+            _mockChartService.Object,
+            _mockTechnicalAnalysisService.Object); // Added new service
 
         var cts = new CancellationTokenSource();
 
@@ -189,8 +204,8 @@ public class StockMonitorWorkerTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("inválido ou não foi encontrado")),
-                null, // A exceção não é passada para o log neste caso específico
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("invalid or not found")),
+                null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.Once);
 

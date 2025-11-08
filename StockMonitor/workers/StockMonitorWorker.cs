@@ -15,6 +15,7 @@ namespace StockMonitor.Workers
         private readonly IAlertingEngine _alertingEngine;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
         private readonly IChartService _chartService;
+        private readonly ITechnicalAnalysisService _technicalAnalysisService;
         private readonly List<decimal> _priceHistory = new List<decimal>();
 
         public StockMonitorWorker(
@@ -24,7 +25,8 @@ namespace StockMonitor.Workers
             MonitorSettings monitorSettings,
             IAlertingEngine alertingEngine,
             IHostApplicationLifetime hostApplicationLifetime,
-            IChartService chartService) 
+            IChartService chartService,
+            ITechnicalAnalysisService technicalAnalysisService) 
         {
             _logger = logger;
             _priceProvider = priceProvider;
@@ -33,6 +35,7 @@ namespace StockMonitor.Workers
             _alertingEngine = alertingEngine; 
             _hostApplicationLifetime = hostApplicationLifetime;
             _chartService = chartService;
+            _technicalAnalysisService = technicalAnalysisService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -41,42 +44,45 @@ namespace StockMonitor.Workers
             {
                 try
                 {
-                    decimal precoAtual = await _priceProvider.GetPriceAsync(_monitorSettings.Ticker);
-                    _logger.LogInformation("Cotação atual de {Ticker}: {Preco}", _monitorSettings.Ticker, precoAtual);
+                    decimal currentPrice = await _priceProvider.GetPriceAsync(_monitorSettings.Ticker);
+                    _logger.LogInformation("Current quote for {Ticker}: {Price}", _monitorSettings.Ticker, currentPrice);
 
-                    _priceHistory.Add(precoAtual);
-                    if (_priceHistory.Count > 10)
+                    _priceHistory.Add(currentPrice);
+                    int maxHistoryCount = _monitorSettings.SmaPeriod * 2;
+                    if (_priceHistory.Count > maxHistoryCount)
                     {
                         _priceHistory.RemoveAt(0);
                     }
 
-                    _chartService.DisplayPriceChart(_monitorSettings.Ticker, _priceHistory, _monitorSettings.SellPrice, _monitorSettings.BuyPrice);
+                    decimal sma = _technicalAnalysisService.CalculateSma(_priceHistory, _monitorSettings.SmaPeriod);
 
-                    // Delega a decisão para a classe de lógica
-                    var decision = _alertingEngine.CheckPrice(precoAtual);
+                    _chartService.DisplayPriceChart(_monitorSettings.Ticker, _priceHistory, _monitorSettings.SellPrice, _monitorSettings.BuyPrice, sma);
 
-                    // Apenas reage à decisão
+                    // Delegate the decision to the logic class
+                    var decision = _alertingEngine.CheckPrice(currentPrice);
+
+                    // React to the decision
                     if (decision == AlertDecision.SendSell)
                     {
-                        var subject = $"Alerta de Venda - {_monitorSettings.Ticker}";
-                        var body = $"O preço de {_monitorSettings.Ticker} subiu para {precoAtual}, acima do limite de {_monitorSettings.SellPrice}";
+                        var subject = $"Sell Alert - {_monitorSettings.Ticker}";
+                        var body = $"The price of {_monitorSettings.Ticker} rose to {currentPrice}, above the limit of {_monitorSettings.SellPrice}";
                         await _notificationService.SendNotificationAsync(subject, body);
                     }
                     else if (decision == AlertDecision.SendBuy)
                     {
-                        var subject = $"Alerta de Compra - {_monitorSettings.Ticker}";
-                        var body = $"O preço de {_monitorSettings.Ticker} caiu para {precoAtual}, abaixo do limite de {_monitorSettings.BuyPrice}";
+                        var subject = $"Buy Alert - {_monitorSettings.Ticker}";
+                        var body = $"The price of {_monitorSettings.Ticker} dropped to {currentPrice}, below the limit of {_monitorSettings.BuyPrice}";
                         await _notificationService.SendNotificationAsync(subject, body);
                     }
                 }
                 catch (KeyNotFoundException)
                 {
-                    _logger.LogError("O ticker {Ticker} é inválido ou não foi encontrado. A aplicação será encerrada.", _monitorSettings.Ticker);
+                    _logger.LogError("The ticker {Ticker} is invalid or not found. The application will be shut down.", _monitorSettings.Ticker);
                     _hostApplicationLifetime.StopApplication();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    _logger.LogError("Erro no loop de monitoramento. Tentando novamente em 60s.");
+                    _logger.LogError(ex, "Error in the monitoring loop. Trying again in 60s.");
                     await Task.Delay(60000, stoppingToken);
                 }
                 

@@ -15,7 +15,7 @@ public class AlertingEngineTests
     public AlertingEngineTests()
     {
         _mockLogger = new Mock<ILogger<AlertingEngine>>();
-        _settings = new MonitorSettings("TEST", 100, 80);
+        _settings = new MonitorSettings("TEST", 100, 80, 5);
     }
 
     [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda")]

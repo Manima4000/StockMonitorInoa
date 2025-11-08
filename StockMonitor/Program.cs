@@ -10,12 +10,16 @@ using DotNetEnv;
 
 public class Program
 {
+    private const int DefaultSmaPeriod = 5;
     public static async Task Main(string[] args)
     {   
         Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
-        if (args.Length != 3)
+        if (args.Length < 3 || args.Length > 4)
         {
-            Console.WriteLine("CASO 1 - (Pasta /StockMonitor/) - COMANDO: dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra>\nCASO 2 - (Pasta /Project Inoa/) - COMANDO: docker run --rm -it --env-file StockMonitor/.env stockmonitor <ATIVO> <PREÇO VENDA> <PREÇO COMPRA>");
+            Console.WriteLine("USO: dotnet run -- <Ativo> <PrecoVenda> <PrecoCompra> [PeriodoMediaMovel]");
+            Console.WriteLine("EXEMPLO: dotnet run -- PETR4 28.50 27.50 5");
+            Console.WriteLine("\n[PeriodoMediaMovel] é opcional. O padrão é 5.");
+            Console.WriteLine("\nUSO DOCKER: docker run --rm -it --env-file StockMonitor/.env stockmonitor <ATIVO> <PREÇO VENDA> <PREÇO COMPRA> [PeriodoMediaMovel]");
             return;
         }
 
@@ -44,6 +48,7 @@ public class Program
                 services.AddSingleton<INotificationService, EmailNotificationService>();
                 services.AddSingleton<IAlertingEngine, AlertingEngine>();
                 services.AddSingleton<IChartService, SpectreChartService>();
+                services.AddSingleton<ITechnicalAnalysisService, TechnicalAnalysisService>();
 
                 //Registra nosso loop principal como um serviço de background
                 services.AddHostedService<StockMonitorWorker>();
@@ -61,8 +66,9 @@ public class Program
             string ticker = args[0].ToUpperInvariant();
             decimal sellPrice = decimal.Parse(args[1], CultureInfo.InvariantCulture);
             decimal buyPrice = decimal.Parse(args[2], CultureInfo.InvariantCulture);
+            int smaPeriod = args.Length == 4 ? int.Parse(args[3]) : DefaultSmaPeriod;
 
-            return new MonitorSettings(ticker, sellPrice, buyPrice);
+            return new MonitorSettings(ticker, sellPrice, buyPrice, smaPeriod);
         }
         catch (Exception ex)
         {
