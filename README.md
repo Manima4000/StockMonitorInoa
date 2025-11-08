@@ -1,5 +1,7 @@
 # StockMonitor
 
+[![CI/CD Workflow](https://github.com/Manima4000/StockMonitorInoa/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Manima4000/StockMonitorInoa/actions/workflows/ci-cd.yml)
+
 Este é um aplicativo de console .NET que monitora o preço de uma ação e envia alertas por e-mail quando o preço atinge determinados limites de compra ou venda.
 
 ## Pré-requisitos
