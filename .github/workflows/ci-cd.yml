@@ -36,4 +36,9 @@ jobs:
       run: docker build -t stockmonitor .
 
     - name: Run Docker container (for verification)
-      run: docker run --rm --env-file StockMonitor/.env stockmonitor PETR4 32.16 32.00
+      run: |
+        CONTAINER_ID=$(docker run -d --env-file StockMonitor/.env stockmonitor PETR4 32.16 32.00)
+        echo "Started container with ID: $CONTAINER_ID"
+        sleep 15 # Wait for 30 seconds to allow the application to start and potentially log errors
+        docker stop $CONTAINER_ID
+        docker rm $CONTAINER_ID
