@@ -2,7 +2,7 @@
 
 [![CI/CD Workflow](https://github.com/Manima4000/StockMonitorInoa/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Manima4000/StockMonitorInoa/actions/workflows/ci-cd.yml)
 
-Este é um aplicativo de console .NET que monitora o preço de uma ação e envia alertas por e-mail quando o preço atinge determinados limites de compra ou venda.
+Este é um aplicativo de console .NET que monitora o preço de múltiplas ações e envia alertas por e-mail quando os preços atingem determinados limites de compra ou venda.
 
 ## Pré-requisitos
 
@@ -20,11 +20,40 @@ cd Project Inoa
 
 ## Como Configurar
 
-O aplicativo requer algumas configurações para funcionar corretamente, principalmente para o envio de e-mails.
+O aplicativo requer algumas configurações para funcionar corretamente.
 
-### 1. Configurações de SMTP
+### 1. Configuração das Ações
 
-As configurações do servidor de e-mail (SMTP) são carregadas a partir do arquivo `StockMonitor/appsettings.json`. Abra este arquivo e edite a seção `SmtpSettings` com as informações do seu provedor de e-mail:
+Abra o arquivo `StockMonitor/appsettings.json`. A configuração dos ativos a serem monitorados é feita na seção `"Stocks"`. Você pode adicionar quantos ativos quiser a esta lista.
+
+```json
+{
+  "Stocks": [
+    {
+      "Ticker": "PETR4",
+      "SellPrice": 30.0,
+      "BuyPrice": 25.0,
+      "SmaPeriod": 5
+    },
+    {
+      "Ticker": "VALE3",
+      "SellPrice": 70.0,
+      "BuyPrice": 65.0,
+      "SmaPeriod": 10
+    },
+    {
+      "Ticker": "MGLU3",
+      "SellPrice": 2.50,
+      "BuyPrice": 1.50,
+      "SmaPeriod": 8
+    }
+  ]
+}
+```
+
+### 2. Configurações de SMTP
+
+As configurações do servidor de e-mail (SMTP) também ficam no `StockMonitor/appsettings.json`. Edite a seção `SmtpSettings` com as informações do seu provedor de e-mail:
 
 ```json
 {
@@ -33,139 +62,81 @@ As configurações do servidor de e-mail (SMTP) são carregadas a partir do arqu
     "SmtpServidor": "smtp.seuprovedor.com",
     "SmtpPorta": 587,
     "SmtpUsuario": "seu-usuario-smtp@exemplo.com",
-    "SmtpSenha": "" //Deixar desse jeito mesmo
+    "SmtpSenha": "" // Deixe em branco aqui
   }
 }
 ```
 
-### 2. Senha do SMTP
+### 3. Senha do SMTP
 
 Por razões de segurança, a senha do SMTP não é armazenada no `appsettings.json`. Em vez disso, ela é carregada a partir de um arquivo `.env`.
 
-Crie um arquivo chamado `.env` dentro da pasta projeto (`Project Inoa/StockMonitor/.env`) e adicione a seguinte linha:
+Crie um arquivo chamado `.env` dentro da pasta `StockMonitor` (`Project Inoa/StockMonitor/.env`) e adicione a seguinte linha:
 
 ```
-SmtpSettings__SmtpSenha=sua-senha-smtp-aqui (sem aspas)
+SmtpSettings__SmtpSenha=sua-senha-smtp-aqui
 ```
 
 **Importante:** O arquivo `.env` está no `.gitignore` e não deve ser enviado para o repositório.
 
-
-
 ## Como Rodar Localmente
-
-
-
-O aplicativo é executado a partir da linha de comando, e você precisa fornecer três argumentos:
-
-
-
-1.  **Ativo:** O ticker da ação que você quer monitorar (ex: `PETR4` para Petrobras).
-
-2.  **Preço de Venda:** O preço acima do qual um alerta de venda deve ser enviado.
-
-3.  **Preço de Compra:** O preço abaixo do qual um alerta de compra deve ser enviado.
-
-
 
 Para rodar o aplicativo, navegue até a pasta `StockMonitor` e use o comando `dotnet run`:
 
-
-
 ```bash
-
 cd StockMonitor
-
-dotnet run -- PETR4 40.00 32.00
-
+dotnet run
 ```
 
-
-
-Neste exemplo, o aplicativo irá monitorar a ação `PETR4.SA`, enviando um alerta se o preço subir para R$ 40,00 ou mais, ou se cair para R$ 32,00 ou menos.
-
-
+O aplicativo irá carregar a configuração do `appsettings.json` e começar a monitorar os ativos listados.
 
 ## Como Rodar com Docker
 
-
-
-Você pode rodar o aplicativo usando Docker. Certifique-se de ter o Docker instalado em sua máquina.
-
-
+Você pode rodar o aplicativo usando Docker. Certifique-se de ter o Docker instalado.
 
 ### 1. Construir a Imagem Docker
 
-
-
 Navegue até o diretório raiz do projeto (`Project Inoa`) e construa a imagem Docker:
 
-
-
 ```bash
-
 docker build -t stockmonitor .
-
 ```
-
-
 
 ### 2. Executar o Contêiner Docker
 
-
-
-Para executar o contêiner, você precisará de um arquivo `.env` na pasta `StockMonitor` (conforme descrito na seção "2. Senha do SMTP"). O comando de execução é:
-
-
+Para executar o contêiner, você precisará do arquivo `.env` na pasta `StockMonitor` (conforme descrito na seção "3. Senha do SMTP"). O comando de execução é:
 
 ```bash
-
-docker run --rm -it --env-file StockMonitor/.env stockmonitor "ATIVO" "PREÇO VENDA" "PREÇO COMPRA"
-
+docker run --rm -it --env-file StockMonitor/.env stockmonitor
 ```
 
-
-
-Neste exemplo, o contêiner irá monitorar a ação `ATIVO`, enviando um alerta se o preço subir para `PREÇO VENDA` ou mais, ou se cair para `PREÇO COMPRA` ou menos.
-
-
+O contêiner irá iniciar e usar a configuração de ativos definida no `appsettings.json` da imagem.
 
 ## Como Funciona
 
+Ao ser executada, a aplicação inicia um loop que busca os preços de todos os ativos configurados a cada 2 segundos. O console exibe uma dashboard em tempo real com os dados de todos os ativos.
 
+### Visualização no Console
 
-Ao ser executada, a aplicação inicia um loop de monitoramento contínuo que busca o preço do ativo a cada segundo. O console exibe a cotação atual e um gráfico para facilitar a visualização.
-
-### Visualização Gráfica
-
-Um gráfico (gerado usando uma biblioteca de gráficos) é renderizado diretamente no console para mostrar a flutuação do preço em relação aos seus limites.
-
-- **Escala Dinâmica:** O eixo Y (preço) do gráfico não começa do zero. Ele é ajustado dinamicamente para focar no range entre o seu preço de compra e o seu preço de venda, oferecendo uma visualização muito mais clara da ação do preço em torno dos seus limites.
-
-- **Cores dos Limites:**
-
-  - **Linha de Venda (Azul):** Uma linha no topo do gráfico mostrando seu limite de venda.
-
-  - **Linha de Compra (Vermelha):** Uma linha na base do gráfico mostrando seu limite de compra
-
-  - **Preço Atual (Amarela):** A linha que se move, mostrando a cotação atual do ativo.
+Uma tabela (gerada com a biblioteca Spectre.Console) é renderizada diretamente no console, mostrando:
+- **Ativo:** O ticker da ação.
+- **Preço Atual:** A cotação atual. O preço fica verde se estiver acima do alvo de venda e vermelho se estiver abaixo do alvo de compra.
+- **MMS:** A Média Móvel Simples calculada para o período configurado.
+- **Alvo Compra/Venda:** Os limites que você configurou.
+- **Variação:** Uma seta ▲ (verde) ou ▼ (vermelha) indicando a última variação de preço.
 
 ### Lógica de Alertas (Anti-Spam)
 
-A aplicação possui um motor de lógica com estado para enviar alertas de forma inteligente e evitar o envio excessivo de e-mails (spam)
+A aplicação possui um motor de lógica com estado para cada ativo, evitando o envio excessivo de e-mails (spam).
 
-- **Envio Único:** Quando o preço cruza um limite (por exemplo, cai abaixo do preço de compra), um e-mail de alerta é enviado apenas uma vez.
-
-- **Reset de Estado:** Para que um novo alerta de compra seja enviado, o preço precisa primeiro subir de volta acima do limite de compra (resetando o "estado" do alerta) e, em seguida, cair abaixo dele novamente.
-
-- **Exemplo Prático:** Se o preço de compra é R$ 25,00 e a cotação cai para R$ 24,90, você recebe um e-mail. Se o preço continuar caindo para R$ 24,80, você não receberá outro e-mail. No entanto, se o preço subir para R$ 25,10 e depois cair para R$ 24,95, você receberá um segundo e-mail, pois o alerta foi "rearmado". A mesma lógica se aplica ao limite de venda.
-
+- **Envio Único:** Quando o preço de um ativo cruza um limite (por exemplo, cai abaixo do preço de compra), um e-mail de alerta é enviado apenas uma vez para aquele ativo.
+- **Reset de Estado:** Para que um novo alerta de compra seja enviado para o mesmo ativo, o preço precisa primeiro subir de volta acima do limite de compra (resetando o "estado" do alerta) e, em seguida, cair abaixo dele novamente.
+- **Exemplo Prático:** Se o preço de compra para PETR4 é R$ 25,00 e a cotação cai para R$ 24,90, você recebe um e-mail. Se o preço continuar caindo para R$ 24,80, você não receberá outro e-mail. No entanto, se o preço subir para R$ 25,10 e depois cair para R$ 24,95, você receberá um segundo e-mail, pois o alerta foi "rearmado". A mesma lógica se aplica ao limite de venda e funciona de forma independente para cada ativo.
 
 ## Como Rodar os Testes
 
-O projeto inclui uma suíte de testes unitários e de integração. Para rodar os testes, navegue até a pasta `StockMonitor.Tests` e execute o seguinte comando:
+O projeto inclui uma suíte de testes unitários e de integração. Para rodar os testes, navegue até a pasta raiz do projeto e execute:
 
 ```bash
-cd ..\StockMonitor.Tests
-dotnet test --logger "console;verbosity=detailed" 
+dotnet test
 ```

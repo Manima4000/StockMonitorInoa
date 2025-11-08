@@ -7,68 +7,62 @@ namespace StockMonitor.Services
 {
     public class SpectreChartService : IChartService
     {
-        public void DisplayPriceChart(string ticker, List<decimal> priceHistory, decimal sellPrice, decimal buyPrice, decimal sma)
+        public void DisplayDataTable(IEnumerable<StockTickData> data)
         {
-            if (priceHistory.Count == 0) return;
+            var table = new Table()
+                .Title("[yellow bold]Dashboard de Monitoramento de Ações[/]")
+                .Border(TableBorder.Rounded)
+                .Expand();
 
-            var allValues = new List<decimal>(priceHistory) { sellPrice, buyPrice };
-            if (sma > 0)
+            table.AddColumn("[bold]Ativo[/]");
+            table.AddColumn(new TableColumn("[bold]Preço Atual[/]").Centered());
+            table.AddColumn(new TableColumn("[bold]MMS[/]").Centered());
+            table.AddColumn(new TableColumn("[bold]Alvo Compra[/]").Centered());
+            table.AddColumn(new TableColumn("[bold]Alvo Venda[/]").Centered());
+            table.AddColumn(new TableColumn("[bold]Variação[/]").Centered());
+
+            if (!data.Any())
             {
-                allValues.Add(sma);
+                table.AddRow("[grey]Aguardando dados...[/]");
             }
+            else
+            {
+                foreach (var stock in data)
+                {
+                    var priceMarkup = GetPriceMarkup(stock.CurrentPrice, stock.SellPrice, stock.BuyPrice);
+                    var smaMarkup = stock.Sma > 0 ? stock.Sma.ToString("F2") : "[grey]N/A[/]";
+                    var directionMarkup = GetDirectionMarkup(stock.Change);
 
-            var chartMinValue = allValues.Min();
-            var chartMaxValue = allValues.Max();
+                    table.AddRow(
+                        $"[bold]{stock.Ticker}[/]",
+                        priceMarkup,
+                        smaMarkup,
+                        $"[blue]{stock.BuyPrice:F2}[/]",
+                        $"[green]{stock.SellPrice:F2}[/]",
+                        directionMarkup
+                    );
+                }
+            }
             
-            var margin = (chartMaxValue - chartMinValue) * 0.10m; 
-            if (margin <= 0) margin = 0.1m;
-            
-            chartMinValue -= margin;
-            chartMaxValue += margin;
-
-            var priceRange = chartMaxValue - chartMinValue;
-            if (priceRange <= 0) priceRange = 1;
-            
-            var chart = new BarChart()
-                .Width(60)
-                .Label($"[green bold underline]Histórico de Preços de {ticker}[/]")
-                .CenterLabel()
-                .WithMaxValue(100)
-                .HideValues();
-
-            foreach (var price in priceHistory)
-            {
-                var color = Color.Yellow;
-                if (price >= sellPrice) color = Color.Green;
-                else if (price <= buyPrice) color = Color.Red;
-
-                decimal normalizedValue = (price - chartMinValue) / priceRange * 100;
-                normalizedValue = Math.Max(0, Math.Min(100, normalizedValue));
-                
-                chart.AddItem(price.ToString("F2"), (double)normalizedValue, color);
-            }
-
-            if (sma > 0)
-            {
-                decimal normalizedSma = (sma - chartMinValue) / priceRange * 100;
-                normalizedSma = Math.Max(0, Math.Min(100, normalizedSma));
-                chart.AddItem($"MMS ({sma:F2})", (double)normalizedSma, Color.Blue);
-            }
-
-            var legendText = $"[green]≥ Venda ({sellPrice:F2})[/] | [red]≤ Compra ({buyPrice:F2})[/] | [yellow]Normal[/]";
-            if (sma > 0)
-            {
-                legendText += " | [blue]Média Móvel[/]";
-            }
-            var legend = new Panel(new Markup(legendText));
-            legend.Border = BoxBorder.None;
-
-            var chartPanel = new Panel(chart);
-            chartPanel.Header = new PanelHeader($"Range: {chartMinValue:F2} - {chartMaxValue:F2}");
-            chartPanel.Border = BoxBorder.None;
-
             AnsiConsole.Clear();
-            AnsiConsole.Write(new Rows(chartPanel, legend));
+            AnsiConsole.Write(table);
+        }
+
+        private static string GetPriceMarkup(decimal price, decimal sellPrice, decimal buyPrice)
+        {
+            if (price >= sellPrice) return $"[green bold]{price:F2}[/]";
+            if (price <= buyPrice) return $"[red bold]{price:F2}[/]";
+            return $"[white]{price:F2}[/]";
+        }
+
+        private static string GetDirectionMarkup(PriceChangeDirection direction)
+        {
+            return direction switch
+            {
+                PriceChangeDirection.Up => "[green bold]▲[/]",
+                PriceChangeDirection.Down => "[red bold]▼[/]",
+                _ => "[grey]-[/]"
+            };
         }
     }
 }

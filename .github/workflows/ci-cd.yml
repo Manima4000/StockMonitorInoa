@@ -37,8 +37,9 @@ jobs:
 
     - name: Run Docker container (for verification)
       run: |
-        CONTAINER_ID=$(docker run -d --env-file StockMonitor/.env stockmonitor PETR4 40.00 28.00)
+        CONTAINER_ID=$(docker run -d --env-file StockMonitor/.env stockmonitor)
         echo "Started container with ID: $CONTAINER_ID"
-        sleep 15 # Wait for 30 seconds to allow the application to start and potentially log errors
+        sleep 15 # Wait for 15 seconds to allow the application to start and potentially log errors
+        docker logs $CONTAINER_ID
         docker stop $CONTAINER_ID
         docker rm $CONTAINER_ID

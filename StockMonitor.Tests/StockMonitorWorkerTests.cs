@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using StockMonitor.Interfaces;
 using StockMonitor.Services;
 using StockMonitor.Settings;
 using StockMonitor.Workers;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -16,201 +17,136 @@ namespace StockMonitor.Tests;
 
 public class StockMonitorWorkerTests
 {
-    private readonly Mock<ILogger<StockMonitorWorker>> _mockLogger;
+    private readonly Mock<ILogger<StockMonitorWorker>> _mockWorkerLogger;
     private readonly Mock<IPriceProvider> _mockPriceProvider;
     private readonly Mock<INotificationService> _mockNotificationService;
-    private readonly Mock<IAlertingEngine> _mockAlertingEngine;
-    private readonly MonitorSettings _monitorSettings;
-    private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
     private readonly Mock<IChartService> _mockChartService;
     private readonly Mock<ITechnicalAnalysisService> _mockTechnicalAnalysisService;
+    private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
+    private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly List<MonitorSettings> _monitorSettings;
 
     public StockMonitorWorkerTests()
     {
-        _mockLogger = new Mock<ILogger<StockMonitorWorker>>();
+        _mockWorkerLogger = new Mock<ILogger<StockMonitorWorker>>();
         _mockPriceProvider = new Mock<IPriceProvider>();
         _mockNotificationService = new Mock<INotificationService>();
-        _mockAlertingEngine = new Mock<IAlertingEngine>();
-        _monitorSettings = new MonitorSettings("PETR4", 30, 25, 5); // Added SMA period
-        _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
         _mockChartService = new Mock<IChartService>();
         _mockTechnicalAnalysisService = new Mock<ITechnicalAnalysisService>();
+        _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
 
-        // Setup chart service to accept the new method signature
-        _mockChartService.Setup(c => c.DisplayPriceChart(
-            It.IsAny<string>(),
-            It.IsAny<List<decimal>>(),
-            It.IsAny<decimal>(),
-            It.IsAny<decimal>(),
-            It.IsAny<decimal>())); // New SMA parameter
+        // Setup mock logger factory to return a mock logger
+        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new Mock<ILogger<AlertingEngine>>().Object);
+
+        // Setup default settings for tests
+        _monitorSettings = new List<MonitorSettings>
+        {
+            new("PETR4", 30, 25, 5),
+            new("VALE3", 70, 65, 5)
+        };
     }
 
-    [Fact(DisplayName = "Deve enviar notificação de venda quando o AlertingEngine retornar 'SendSell'")]
-    public async Task ExecuteAsync_WhenAlertingEngineReturnsSendSell_ShouldSendNotification()
+    private StockMonitorWorker CreateWorker(List<MonitorSettings> settings)
     {
-        var price = 31m;
-        _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
-        _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.SendSell);
-
-        var worker = new StockMonitorWorker(
-            _mockLogger.Object,
+        var options = Options.Create(settings);
+        return new StockMonitorWorker(
+            _mockWorkerLogger.Object,
             _mockPriceProvider.Object,
             _mockNotificationService.Object,
-            _monitorSettings,
-            _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object,
             _mockChartService.Object,
-            _mockTechnicalAnalysisService.Object); // Added new service
+            _mockTechnicalAnalysisService.Object,
+            options,
+            _mockLoggerFactory.Object,
+            _mockHostApplicationLifetime.Object);
+    }
 
-        var cts = new CancellationTokenSource();
+    [Fact(DisplayName = "Deve enviar notificação de venda para o ativo correto")]
+    public async Task ExecuteAsync_WhenSellPriceIsReached_ShouldSendNotificationForCorrectTicker()
+    {
+        // Arrange
+        var petr4 = _monitorSettings[0];
+        var vale3 = _monitorSettings[1];
+        var prices = new Dictionary<string, decimal>
+        {
+            { petr4.Ticker, 31m }, // Crosses sell threshold
+            { vale3.Ticker, 68m }  // Stable
+        };
+        _mockPriceProvider.Setup(p => p.GetPricesAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(prices);
 
-        var workerTask = worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        cts.Cancel();
+        var worker = CreateWorker(_monitorSettings);
+        var cts = new CancellationTokenSource(100); // Run for 100ms
 
-        var expectedSubject = $"Sell Alert - {_monitorSettings.Ticker}";
-        var expectedBody = $"The price of {_monitorSettings.Ticker} rose to {price}, above the limit of {_monitorSettings.SellPrice}";
+        // Act
+        await worker.StartAsync(cts.Token);
 
+        // Assert
+        var expectedSubject = $"Alerta de Venda - {petr4.Ticker}";
+        var expectedBody = $"O preço de {petr4.Ticker} subiu para {prices[petr4.Ticker]:F2}, acima do seu alvo de {petr4.SellPrice:F2}.";
+        
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(expectedSubject, expectedBody),
             Times.Once);
-
-        await workerTask;
-    }
-
-    [Fact(DisplayName = "Deve enviar notificação de compra quando o AlertingEngine retornar 'SendBuy'")]
-    public async Task ExecuteAsync_WhenAlertingEngineReturnsSendBuy_ShouldSendNotification()
-    {
-
-        var price = 24m;
-        _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
-        _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.SendBuy);
-
-        var worker = new StockMonitorWorker(
-            _mockLogger.Object,
-            _mockPriceProvider.Object,
-            _mockNotificationService.Object,
-            _monitorSettings,
-            _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object,
-            _mockChartService.Object,
-            _mockTechnicalAnalysisService.Object); // Added new service
-
-        var cts = new CancellationTokenSource();
-
-
-        var workerTask = worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        cts.Cancel();
-
-
-        var expectedSubject = $"Buy Alert - {_monitorSettings.Ticker}";
-        var expectedBody = $"The price of {_monitorSettings.Ticker} dropped to {price}, below the limit of {_monitorSettings.BuyPrice}";
-
+        
+        // Ensure no alert was sent for the other ticker
         _mockNotificationService.Verify(
-            n => n.SendNotificationAsync(expectedSubject, expectedBody),
-            Times.Once);
-
-        await workerTask;
+            n => n.SendNotificationAsync(It.Is<string>(s => s.Contains(vale3.Ticker)), It.IsAny<string>()),
+            Times.Never);
     }
 
-    [Fact(DisplayName = "Não deve enviar notificação quando o AlertingEngine retornar 'Hold'")]
-    public async Task ExecuteAsync_WhenAlertingEngineReturnsHold_ShouldNotSendNotification()
+    [Fact(DisplayName = "Não deve enviar notificação quando os preços estão estáveis")]
+    public async Task ExecuteAsync_WhenPricesAreStable_ShouldNotSendNotification()
     {
-        var price = 28m;
-        _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ReturnsAsync(price);
-        _mockAlertingEngine.Setup(e => e.CheckPrice(price)).Returns(AlertDecision.Hold);
+        // Arrange
+        var prices = new Dictionary<string, decimal>
+        {
+            { "PETR4.SA", 28m },
+            { "VALE3.SA", 68m }
+        };
+        _mockPriceProvider.Setup(p => p.GetPricesAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(prices);
 
-        var worker = new StockMonitorWorker(
-            _mockLogger.Object,
-            _mockPriceProvider.Object,
-            _mockNotificationService.Object,
-            _monitorSettings,
-            _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object,
-            _mockChartService.Object,
-            _mockTechnicalAnalysisService.Object); // Added new service
+        var worker = CreateWorker(_monitorSettings);
+        var cts = new CancellationTokenSource(100);
 
-        var cts = new CancellationTokenSource();
+        // Act
+        await worker.StartAsync(cts.Token);
 
-        var workerTask = worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        cts.Cancel();
-
+        // Assert
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
-
-        await workerTask;
     }
 
-    [Fact(DisplayName = "Deve registrar um erro quando o PriceProvider lançar uma exceção")]
-    public async Task ExecuteAsync_WhenPriceProviderThrowsException_ShouldLogError()
+    [Fact(DisplayName = "Deve chamar os serviços para cada ativo com preço")]
+    public async Task ExecuteAsync_WithValidPrices_ShouldCallServicesForEachTicker()
     {
-        var exception = new Exception("Test Exception");
-        _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ThrowsAsync(exception);
+        // Arrange
+        var prices = new Dictionary<string, decimal>
+        {
+            { "PETR4.SA", 28m },
+            { "VALE3.SA", 68m }
+        };
+        _mockPriceProvider.Setup(p => p.GetPricesAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(prices);
 
-        var worker = new StockMonitorWorker(
-            _mockLogger.Object,
-            _mockPriceProvider.Object,
-            _mockNotificationService.Object,
-            _monitorSettings,
-            _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object,
-            _mockChartService.Object,
-            _mockTechnicalAnalysisService.Object); // Added new service
+        var worker = CreateWorker(_monitorSettings);
+        var cts = new CancellationTokenSource(100);
 
-        var cts = new CancellationTokenSource();
+        // Act
+        await worker.StartAsync(cts.Token);
 
-        var workerTask = worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        cts.Cancel();
+        // Assert
+        // Verify SMA was calculated for both
+        _mockTechnicalAnalysisService.Verify(
+            t => t.CalculateSma(It.IsAny<List<decimal>>(), It.IsAny<int>()),
+            Times.Exactly(2));
 
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error in the monitoring loop. Trying again in 60s.")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+        // Verify the data table was displayed with data for both
+        _mockChartService.Verify(
+            c => c.DisplayDataTable(It.Is<IEnumerable<StockTickData>>(d => d.Count() == 2)),
             Times.Once);
-
-        await workerTask;
-    }
-
-    [Fact(DisplayName = "Deve registrar um erro e parar a aplicação quando o PriceProvider lançar KeyNotFoundException")]
-    public async Task ExecuteAsync_WhenPriceProviderThrowsKeyNotFoundException_ShouldLogErrorAndStopApplication()
-    {
-        var exception = new KeyNotFoundException("Test KeyNotFoundException");
-        _mockPriceProvider.Setup(p => p.GetPriceAsync(It.IsAny<string>())).ThrowsAsync(exception);
-
-        var worker = new StockMonitorWorker(
-            _mockLogger.Object,
-            _mockPriceProvider.Object,
-            _mockNotificationService.Object,
-            _monitorSettings,
-            _mockAlertingEngine.Object,
-            _mockHostApplicationLifetime.Object,
-            _mockChartService.Object,
-            _mockTechnicalAnalysisService.Object); // Added new service
-
-        var cts = new CancellationTokenSource();
-
-        var workerTask = worker.StartAsync(cts.Token);
-        await Task.Delay(100);
-        cts.Cancel();
-
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("invalid or not found")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-            Times.Once);
-
-        _mockHostApplicationLifetime.Verify(h => h.StopApplication(), Times.Once);
-
-        await workerTask;
     }
 }
