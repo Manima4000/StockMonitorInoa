@@ -52,13 +52,13 @@ namespace StockMonitor.Services
             {
                 decimal normalizedSma = (sma - chartMinValue) / priceRange * 100;
                 normalizedSma = Math.Max(0, Math.Min(100, normalizedSma));
-                chart.AddItem($"MMS ({sma:F2})", (double)normalizedSma, Color.DarkSlateGray2);
+                chart.AddItem($"MMS ({sma:F2})", (double)normalizedSma, Color.Blue);
             }
 
             var legendText = $"[green]≥ Venda ({sellPrice:F2})[/] | [red]≤ Compra ({buyPrice:F2})[/] | [yellow]Normal[/]";
             if (sma > 0)
             {
-                legendText += " | [gray]Média Móvel[/]";
+                legendText += " | [blue]Média Móvel[/]";
             }
             var legend = new Panel(new Markup(legendText));
             legend.Border = BoxBorder.None;
