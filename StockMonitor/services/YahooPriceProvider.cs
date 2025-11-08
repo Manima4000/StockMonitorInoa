@@ -29,7 +29,7 @@ namespace StockMonitor.Services
 
         public async Task<decimal> GetPriceAsync(string ticker)
         {
-            var result = await GetPricesAsync(new[] { ticker });
+            var result = await GetPricesAsync([ticker]);
             if (result.TryGetValue(ticker, out var price))
             {
                 return price;
@@ -40,7 +40,7 @@ namespace StockMonitor.Services
         public async Task<IReadOnlyDictionary<string, decimal>> GetPricesAsync(IEnumerable<string> tickers)
         {
             var upperCaseTickers = tickers.Select(t => t.ToUpperInvariant()).ToArray();
-            if (!upperCaseTickers.Any())
+            if (upperCaseTickers.Length == 0)
             {
                 return new Dictionary<string, decimal>();
             }
