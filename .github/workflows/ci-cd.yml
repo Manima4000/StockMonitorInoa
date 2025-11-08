@@ -36,4 +36,4 @@ jobs:
       run: docker build -t stockmonitor .
 
     - name: Run Docker container (for verification)
-      run: docker run --rm -it --env-file StockMonitor/.env stockmonitor PETR4 32.16 32.00
+      run: docker run --rm --env-file StockMonitor/.env stockmonitor PETR4 32.16 32.00
