@@ -27,6 +27,11 @@ jobs:
     - name: Run tests
       run: dotnet test StockMonitorSolution.sln --no-build
 
+    - name: Create .env file from secret
+      run: |
+        mkdir -p StockMonitor
+        echo "${{ secrets.STOCKMONITOR_ENV_FILE_CONTENT }}" > StockMonitor/.env
+
     - name: Build Docker image
       run: docker build -t stockmonitor .
 
