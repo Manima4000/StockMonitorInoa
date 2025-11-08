@@ -138,5 +138,5 @@ A aplicação possui um motor de lógica com estado para cada ativo, evitando o 
 O projeto inclui uma suíte de testes unitários e de integração. Para rodar os testes, navegue até a pasta raiz do projeto e execute:
 
 ```bash
-dotnet test
+dotnet test StockMonitorSolution.sln
 ```
