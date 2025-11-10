@@ -8,39 +8,40 @@ namespace StockMonitor.Services
     {
         private readonly MonitorSettings _settings;
         private readonly ILogger<AlertingEngine> _logger;
-        private bool _sellAlertSent = false;
-        private bool _buyAlertSent = false;
+        private readonly IDateTimeProvider _dateTimeProvider;
+        private DateTime _lastSellAlertTime = DateTime.MinValue;
+        private DateTime _lastBuyAlertTime = DateTime.MinValue;
+        private readonly TimeSpan _cooldownPeriod = TimeSpan.FromMinutes(5); // 5 minutos de cooldown
 
-        public AlertingEngine(MonitorSettings settings, ILogger<AlertingEngine> logger)
+        public AlertingEngine(MonitorSettings settings, ILogger<AlertingEngine> logger, IDateTimeProvider dateTimeProvider)
         {
             _settings = settings;
             _logger = logger;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public AlertDecision CheckPrice(decimal currentPrice)
         {
+            var now = _dateTimeProvider.Now;
+
             // Lógica de Venda
-            if (currentPrice >= _settings.SellPrice && !_sellAlertSent)
+            if (currentPrice >= _settings.SellPrice)
             {
-                _sellAlertSent = true;
-                return AlertDecision.SendSell;
-            }
-            else if (currentPrice < _settings.SellPrice && _sellAlertSent)
-            {
-                _logger.LogInformation("Preço voltou ao normal. Resetando alerta de venda.");
-                _sellAlertSent = false;
+                if ((now - _lastSellAlertTime) > _cooldownPeriod)
+                {
+                    _lastSellAlertTime = now;
+                    return AlertDecision.SendSell;
+                }
             }
 
             // Lógica de Compra
-            if (currentPrice <= _settings.BuyPrice && !_buyAlertSent)
+            if (currentPrice <= _settings.BuyPrice)
             {
-                _buyAlertSent = true;
-                return AlertDecision.SendBuy;
-            }
-            else if (currentPrice > _settings.BuyPrice && _buyAlertSent)
-            {
-                _logger.LogInformation("Preço voltou ao normal. Resetando alerta de compra.");
-                _buyAlertSent = false;
+                if ((now - _lastBuyAlertTime) > _cooldownPeriod)
+                {
+                    _lastBuyAlertTime = now;
+                    return AlertDecision.SendBuy;
+                }
             }
 
             return AlertDecision.Hold;

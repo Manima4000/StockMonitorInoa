@@ -43,6 +43,7 @@ public class Program
                 services.AddSingleton<INotificationService, EmailNotificationService>();
                 services.AddSingleton<IChartService, SpectreChartService>();
                 services.AddSingleton<ITechnicalAnalysisService, TechnicalAnalysisService>();
+                services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
                 // Registra nosso loop principal como um serviço de background
                 services.AddHostedService<StockMonitorWorker>();

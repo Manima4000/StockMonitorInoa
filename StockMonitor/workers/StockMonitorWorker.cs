@@ -27,6 +27,7 @@ namespace StockMonitor.Workers
         private readonly IChartService _chartService;
         private readonly ITechnicalAnalysisService _technicalAnalysisService;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly IDateTimeProvider _dateTimeProvider;
         private readonly Dictionary<string, TickerState> _tickerStates;
 
         public StockMonitorWorker(
@@ -37,7 +38,8 @@ namespace StockMonitor.Workers
             ITechnicalAnalysisService technicalAnalysisService,
             IOptions<List<MonitorSettings>> monitorSettingsOptions,
             ILoggerFactory loggerFactory,
-            IHostApplicationLifetime hostApplicationLifetime)
+            IHostApplicationLifetime hostApplicationLifetime,
+            IDateTimeProvider dateTimeProvider)
         {
             _logger = logger;
             _priceProvider = priceProvider;
@@ -45,6 +47,7 @@ namespace StockMonitor.Workers
             _chartService = chartService;
             _technicalAnalysisService = technicalAnalysisService;
             _hostApplicationLifetime = hostApplicationLifetime;
+            _dateTimeProvider = dateTimeProvider;
 
             _tickerStates = new Dictionary<string, TickerState>();
             foreach (var setting in monitorSettingsOptions.Value)
@@ -53,7 +56,7 @@ namespace StockMonitor.Workers
                 _tickerStates[setting.Ticker] = new TickerState
                 {
                     Settings = setting,
-                    AlertingEngine = new AlertingEngine(setting, alertingEngineLogger)
+                    AlertingEngine = new AlertingEngine(setting, alertingEngineLogger, _dateTimeProvider)
                 };
             }
         }

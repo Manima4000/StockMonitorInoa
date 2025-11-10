@@ -10,90 +10,109 @@ namespace StockMonitor.Tests;
 public class AlertingEngineTests
 {
     private readonly Mock<ILogger<AlertingEngine>> _mockLogger;
+    private readonly Mock<IDateTimeProvider> _mockDateTimeProvider;
     private readonly MonitorSettings _settings;
+    private readonly AlertingEngine _engine;
+    private DateTime _now;
 
     public AlertingEngineTests()
     {
         _mockLogger = new Mock<ILogger<AlertingEngine>>();
+        _mockDateTimeProvider = new Mock<IDateTimeProvider>();
         _settings = new MonitorSettings("TEST", 100, 80, 5);
+        _now = DateTime.Now;
+        _mockDateTimeProvider.Setup(p => p.Now).Returns(() => _now);
+        _engine = new AlertingEngine(_settings, _mockLogger.Object, _mockDateTimeProvider.Object);
     }
 
-    [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda")]
-    public void CheckPrice_WhenPriceIsAboveSellThreshold_ShouldReturnSendSell()
+    [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda e não há cooldown")]
+    public void CheckPrice_PriceAboveSellThreshold_NoCooldown_ReturnsSendSell()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        var currentPrice = 101;
+        // Arrange
+        var price = 101;
 
-        var decision = engine.CheckPrice(currentPrice);
+        // Act
+        var result = _engine.CheckPrice(price);
 
-        Assert.Equal(AlertDecision.SendSell, decision);
+
+        Assert.Equal(AlertDecision.SendSell, result);
     }
 
-    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está acima do limite de venda e o alerta já foi enviado")]
-    public void CheckPrice_WhenPriceIsAboveSellThresholdAndAlertSent_ShouldReturnHold()
+    [Fact(DisplayName = "Deve retornar 'SendBuy' quando o preço está abaixo do limite de compra e não há cooldown")]
+    public void CheckPrice_PriceBelowBuyThreshold_NoCooldown_ReturnsSendBuy()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(101); // Send first alert
+        var price = 79;
 
-        var decision = engine.CheckPrice(102);
+        var result = _engine.CheckPrice(price);
 
-        Assert.Equal(AlertDecision.Hold, decision);
+        Assert.Equal(AlertDecision.SendBuy, result);
     }
 
-    [Fact(DisplayName = "Deve retornar 'SendBuy' quando o preço está abaixo do limite de compra")]
-    public void CheckPrice_WhenPriceIsBelowBuyThreshold_ShouldReturnSendBuy()
+    [Fact(DisplayName = "Deve retornar 'Hold' se o preço estiver acima do limite de venda, mas dentro do cooldown")]
+    public void CheckPrice_PriceAboveSellThreshold_InCooldown_ReturnsHold()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        var currentPrice = 79;
+        var price = 101;
+        _engine.CheckPrice(price); // First alert, starts cooldown
 
-        var decision = engine.CheckPrice(currentPrice);
+        _now = _now.AddMinutes(1); // Still within 5-minute cooldown
 
-        Assert.Equal(AlertDecision.SendBuy, decision);
+        var result = _engine.CheckPrice(price);
+
+        Assert.Equal(AlertDecision.Hold, result);
     }
 
-    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está abaixo do limite de compra e o alerta já foi enviado")]
-    public void CheckPrice_WhenPriceIsBelowBuyThresholdAndAlertSent_ShouldReturnHold()
+    [Fact(DisplayName = "Deve retornar 'Hold' se o preço estiver abaixo do limite de compra, mas dentro do cooldown")]
+    public void CheckPrice_PriceBelowBuyThreshold_InCooldown_ReturnsHold()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(79); 
+        // Arrange
+        var price = 79;
+        _engine.CheckPrice(price); // First alert, starts cooldown
 
-        var decision = engine.CheckPrice(78);
+        _now = _now.AddMinutes(1); // Still within 5-minute cooldown
 
-        Assert.Equal(AlertDecision.Hold, decision);
+        // Act
+        var result = _engine.CheckPrice(price);
+
+        // Assert
+        Assert.Equal(AlertDecision.Hold, result);
     }
 
-    [Fact(DisplayName = "Deve resetar o alerta de venda quando o preço volta ao normal")]
-    public void CheckPrice_WhenPriceDropsBelowSellThreshold_ShouldResetSellAlert()
+    [Fact(DisplayName = "Deve retornar 'Hold' se o preço estiver entre os limites de compra e venda")]
+    public void CheckPrice_PriceBetweenThresholds_ReturnsHold()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(101); 
+        // Arrange
+        var price = 90;
 
-        engine.CheckPrice(99);
-        var decision = engine.CheckPrice(101); 
+        // Act
+        var result = _engine.CheckPrice(price);
 
-        Assert.Equal(AlertDecision.SendSell, decision);
+        // Assert
+        Assert.Equal(AlertDecision.Hold, result);
     }
 
-    [Fact(DisplayName = "Deve resetar o alerta de compra quando o preço volta ao normal")]
-    public void CheckPrice_WhenPriceRisesAboveBuyThreshold_ShouldResetBuyAlert()
+    [Fact(DisplayName = "Deve retornar 'SendSell' se o preço estiver acima do limite de venda e o cooldown tiver expirado")]
+    public void CheckPrice_PriceAboveSellThreshold_AfterCooldown_ReturnsSendSell()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        engine.CheckPrice(79);
+        var price = 101;
+        _engine.CheckPrice(price); // First alert, starts cooldown
 
-        engine.CheckPrice(81); 
-        var decision = engine.CheckPrice(79);
+        _now = _now.AddMinutes(6); // Cooldown has expired
 
-        Assert.Equal(AlertDecision.SendBuy, decision);
+        var result = _engine.CheckPrice(price);
+
+        Assert.Equal(AlertDecision.SendSell, result);
     }
 
-    [Fact(DisplayName = "Deve retornar 'Hold' quando o preço está entre os limites")]
-    public void CheckPrice_WhenPriceIsBetweenThresholds_ShouldReturnHold()
+    [Fact(DisplayName = "Deve retornar 'SendBuy' se o preço estiver abaixo do limite de compra e o cooldown tiver expirado")]
+    public void CheckPrice_PriceBelowBuyThreshold_AfterCooldown_ReturnsSendBuy()
     {
-        var engine = new AlertingEngine(_settings, _mockLogger.Object);
-        var currentPrice = 90;
+        var price = 79;
+        _engine.CheckPrice(price); // First alert, starts cooldown
 
-        var decision = engine.CheckPrice(currentPrice);
+        _now = _now.AddMinutes(6); // Cooldown has expired
 
-        Assert.Equal(AlertDecision.Hold, decision);
+        var result = _engine.CheckPrice(price);
+
+        Assert.Equal(AlertDecision.SendBuy, result);
     }
 }

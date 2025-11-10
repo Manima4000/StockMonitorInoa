@@ -24,6 +24,7 @@ public class StockMonitorWorkerTests
     private readonly Mock<ITechnicalAnalysisService> _mockTechnicalAnalysisService;
     private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
     private readonly Mock<ILoggerFactory> _mockLoggerFactory;
+    private readonly Mock<IDateTimeProvider> _mockDateTimeProvider;
     private readonly List<MonitorSettings> _monitorSettings;
 
     public StockMonitorWorkerTests()
@@ -35,9 +36,12 @@ public class StockMonitorWorkerTests
         _mockTechnicalAnalysisService = new Mock<ITechnicalAnalysisService>();
         _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockDateTimeProvider = new Mock<IDateTimeProvider>();
 
         _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new Mock<ILogger<AlertingEngine>>().Object);
+        
+        _mockDateTimeProvider.Setup(p => p.Now).Returns(DateTime.Now);
 
         _monitorSettings = new List<MonitorSettings>
         {
@@ -57,7 +61,8 @@ public class StockMonitorWorkerTests
             _mockTechnicalAnalysisService.Object,
             options,
             _mockLoggerFactory.Object,
-            _mockHostApplicationLifetime.Object);
+            _mockHostApplicationLifetime.Object,
+            _mockDateTimeProvider.Object);
     }
 
     [Fact(DisplayName = "Deve enviar notificação de venda para o ativo correto")]
