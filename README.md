@@ -140,3 +140,44 @@ O projeto inclui uma suíte de testes unitários e de integração. Para rodar o
 ```bash
 dotnet test StockMonitorSolution.sln
 ```
+
+## Estrutura do Projeto
+
+O projeto é construído em torno de uma arquitetura de serviços desacoplada, facilitando a manutenção e os testes.
+
+### Worker
+
+-   **`StockMonitorWorker.cs`**: É o coração da aplicação. Como um `BackgroundService`, ele orquestra todo o fluxo de trabalho em um loop contínuo:
+    -   Busca os preços atuais das ações usando o `IPriceProvider`.
+    -   Calcula indicadores técnicos (como a Média Móvel Simples) através do `ITechnicalAnalysisService`.
+    -   Verifica se algum alerta de compra ou venda deve ser disparado com o `IAlertingEngine`.
+    -   Envia notificações por e-mail usando o `INotificationService`.
+    -   Renderiza a tabela de dados no console através do `IChartService`.
+
+### Serviços
+
+-   **`YahooPriceProvider.cs`**: Implementação do `IPriceProvider` que busca os preços das ações na API do Yahoo Finance. Inclui uma política de resiliência (retry) para lidar com falhas de rede.
+-   **`TechnicalAnalysisService.cs`**: Contém a lógica para cálculos de análise técnica, como a Média Móvel Simples (SMA).
+-   **`AlertingEngine.cs`**: Motor de decisão que, para cada ativo, verifica se o preço atual cruzou os umbrais de compra ou venda definidos. Possui uma lógica de *cooldown* para evitar o envio de múltiplos alertas em um curto espaço de tempo.
+-   **`EmailNotificationService.cs`**: Implementação do `INotificationService` que envia os alertas por e-mail usando as configurações de SMTP.
+-   **`SpectreChartService.cs`**: Responsável por renderizar a tabela de monitoramento no console de forma organizada e visualmente agradável, utilizando a biblioteca Spectre.Console.
+-   **`DateTimeProvider.cs`**: Abstrai o `DateTime.Now`, permitindo a injeção de um provedor de data e hora. Isso é crucial para tornar o código testável, especialmente a lógica de *cooldown* que depende do tempo.
+
+### Interfaces
+
+As interfaces definem os contratos para os serviços, garantindo o baixo acoplamento e a alta coesão:
+
+-   **`IPriceProvider.cs`**: Contrato para serviços que fornecem preços de ativos.
+-   **`ITechnicalAnalysisService.cs`**: Contrato para serviços de análise técnica.
+-   **`IAlertingEngine.cs`**: Contrato para o motor de alertas.
+-   **`INotificationService.cs`**: Contrato para serviços de notificação.
+-   **`IChartService.cs`**: Contrato para serviços de exibição de dados.
+-   **`IDateTimeProvider.cs`**: Contrato para provedores de data e hora.
+
+### Settings
+
+As classes de configuração são usadas para carregar dados do `appsettings.json` e de variáveis de ambiente de forma fortemente tipada.
+
+-   **`MonitorSettings.cs`**: Modela as configurações de um único ativo a ser monitorado (ticker, preço de compra/venda, período da SMA).
+-   **`SmtpSettings.cs`**: Modela as configurações do servidor SMTP para o envio de e-mails.
+

@@ -28,12 +28,9 @@ public class AlertingEngineTests
     [Fact(DisplayName = "Deve retornar 'SendSell' quando o preço está acima do limite de venda e não há cooldown")]
     public void CheckPrice_PriceAboveSellThreshold_NoCooldown_ReturnsSendSell()
     {
-        // Arrange
         var price = 101;
 
-        // Act
         var result = _engine.CheckPrice(price);
-
 
         Assert.Equal(AlertDecision.SendSell, result);
     }
@@ -64,29 +61,23 @@ public class AlertingEngineTests
     [Fact(DisplayName = "Deve retornar 'Hold' se o preço estiver abaixo do limite de compra, mas dentro do cooldown")]
     public void CheckPrice_PriceBelowBuyThreshold_InCooldown_ReturnsHold()
     {
-        // Arrange
         var price = 79;
         _engine.CheckPrice(price); // First alert, starts cooldown
 
         _now = _now.AddMinutes(1); // Still within 5-minute cooldown
 
-        // Act
         var result = _engine.CheckPrice(price);
 
-        // Assert
         Assert.Equal(AlertDecision.Hold, result);
     }
 
     [Fact(DisplayName = "Deve retornar 'Hold' se o preço estiver entre os limites de compra e venda")]
     public void CheckPrice_PriceBetweenThresholds_ReturnsHold()
     {
-        // Arrange
         var price = 90;
 
-        // Act
         var result = _engine.CheckPrice(price);
 
-        // Assert
         Assert.Equal(AlertDecision.Hold, result);
     }
 
