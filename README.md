@@ -127,11 +127,11 @@ Uma tabela (gerada com a biblioteca Spectre.Console) é renderizada diretamente 
 
 ### Lógica de Alertas (Anti-Spam)
 
-A aplicação possui um motor de lógica com estado para cada ativo, evitando o envio excessivo de e-mails (spam).
+A aplicação possui um motor de lógica para cada ativo que evita o envio excessivo de e-mails (spam) utilizando um período de cooldown.
 
-- **Envio Único:** Quando o preço de um ativo cruza um limite (por exemplo, cai abaixo do preço de compra), um e-mail de alerta é enviado apenas uma vez para aquele ativo.
-- **Reset de Estado:** Para que um novo alerta de compra seja enviado para o mesmo ativo, o preço precisa primeiro subir de volta acima do limite de compra (resetando o "estado" do alerta) e, em seguida, cair abaixo dele novamente.
-- **Exemplo Prático:** Se o preço de compra para PETR4 é R$ 25,00 e a cotação cai para R$ 24,90, você recebe um e-mail. Se o preço continuar caindo para R$ 24,80, você não receberá outro e-mail. No entanto, se o preço subir para R$ 25,10 e depois cair para R$ 24,95, você receberá um segundo e-mail, pois o alerta foi "rearmado". A mesma lógica se aplica ao limite de venda e funciona de forma independente para cada ativo.
+- **Cooldown de Alertas:** Quando o preço de um ativo cruza um limite (por exemplo, cai abaixo do preço de compra ou sobe acima do preço de venda), um e-mail de alerta é enviado. Após o envio, um período de cooldown de 5 minutos é ativado para aquele limite específico.
+- **Reenvio Após Cooldown:** Novos alertas para o mesmo limite (compra ou venda) só serão enviados se o preço ainda estiver fora da faixa e o período de cooldown tiver expirado. Isso significa que, se o preço permanecer abaixo do limite de compra (ou acima do limite de venda) por mais de 5 minutos, um novo alerta será enviado.
+- **Exemplo Prático:** Se o preço de compra para PETR4 é R$ 25,00 e a cotação cai para R$ 24,90, você recebe um e-mail. Se o preço continuar caindo para R$ 24,80 dentro dos 5 minutos de cooldown, você não receberá outro e-mail. No entanto, se o preço permanecer em R$ 24,80 e 5 minutos se passarem desde o último alerta, um novo e-mail será enviado. A mesma lógica se aplica ao limite de venda e funciona de forma independente para cada ativo.
 
 ## Como Rodar os Testes
 
