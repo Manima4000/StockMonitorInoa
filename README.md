@@ -15,7 +15,7 @@ Clone o repositório para sua máquina local:
 
 ```bash
 git clone https://github.com/Manima4000/StockMonitorInoa
-cd Project Inoa
+cd StockMonitorInoa
 ```
 
 ## Como Configurar
@@ -24,7 +24,7 @@ O aplicativo requer algumas configurações para funcionar corretamente.
 
 ### 1. Configuração das Ações
 
-Abra o arquivo `StockMonitor/appsettings.json`. A configuração dos ativos a serem monitorados é feita na seção `"Stocks"`. Você pode adicionar quantos ativos quiser a esta lista.
+Abra o arquivo `StockMonitorInoa/StockMonitor/appsettings.json`. A configuração dos ativos a serem monitorados é feita na seção `"Stocks"`. Você pode adicionar quantos ativos quiser a esta lista.
 
 ```json
 {
@@ -53,7 +53,7 @@ Abra o arquivo `StockMonitor/appsettings.json`. A configuração dos ativos a se
 
 ### 2. Configurações de SMTP
 
-As configurações do servidor de e-mail (SMTP) também ficam no `StockMonitor/appsettings.json`. Edite a seção `SmtpSettings` com as informações do seu provedor de e-mail:
+As configurações do servidor de e-mail (SMTP) também ficam no `StockMonitorInoa/StockMonitor/appsettings.json`. Edite a seção `SmtpSettings` com as informações do seu provedor de e-mail:
 
 ```json
 {
@@ -71,7 +71,7 @@ As configurações do servidor de e-mail (SMTP) também ficam no `StockMonitor/a
 
 Por razões de segurança, a senha do SMTP não é armazenada no `appsettings.json`. Em vez disso, ela é carregada a partir de um arquivo `.env`.
 
-Crie um arquivo chamado `.env` dentro da pasta `StockMonitor` (`Project Inoa/StockMonitor/.env`) e adicione a seguinte linha:
+Crie um arquivo chamado `.env` dentro da pasta `StockMonitor` (`StockMonitorInoa/StockMonitor/.env`) e adicione a seguinte linha:
 
 ```
 SmtpSettings__SmtpSenha=sua-senha-smtp-aqui
@@ -96,7 +96,7 @@ Você pode rodar o aplicativo usando Docker. Certifique-se de ter o Docker insta
 
 ### 1. Construir a Imagem Docker
 
-Navegue até o diretório raiz do projeto (`Project Inoa`) e construa a imagem Docker:
+Navegue até o diretório raiz do projeto (`StockMonitorInoa`) e construa a imagem Docker:
 
 ```bash
 docker build -t stockmonitor .

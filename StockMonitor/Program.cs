@@ -31,7 +31,7 @@ public class Program
                 // Validação para garantir que a lista de ações foi configurada
                 var sp = services.BuildServiceProvider();
                 var stocks = sp.GetService<IOptions<List<MonitorSettings>>>()?.Value;
-                if (stocks == null || !stocks.Any())
+                if (stocks == null || stocks.Count == 0)
                 {
                     Console.WriteLine("A lista de ações ('Stocks') não foi encontrada ou está vazia no arquivo appsettings.json. A aplicação não pode continuar.");
                     Environment.Exit(1);

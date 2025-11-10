@@ -36,11 +36,9 @@ public class StockMonitorWorkerTests
         _mockHostApplicationLifetime = new Mock<IHostApplicationLifetime>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
 
-        // Setup mock logger factory to return a mock logger
         _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new Mock<ILogger<AlertingEngine>>().Object);
 
-        // Setup default settings for tests
         _monitorSettings = new List<MonitorSettings>
         {
             new("PETR4", 30, 25, 5),
@@ -65,24 +63,21 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve enviar notificação de venda para o ativo correto")]
     public async Task ExecuteAsync_WhenSellPriceIsReached_ShouldSendNotificationForCorrectTicker()
     {
-        // Arrange
         var petr4 = _monitorSettings[0];
         var vale3 = _monitorSettings[1];
         var prices = new Dictionary<string, decimal>
         {
-            { petr4.Ticker, 31m }, // Crosses sell threshold
-            { vale3.Ticker, 68m }  // Stable
+            { petr4.Ticker, 31m }, 
+            { vale3.Ticker, 68m }  
         };
         _mockPriceProvider.Setup(p => p.GetPricesAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(prices);
 
         var worker = CreateWorker(_monitorSettings);
-        var cts = new CancellationTokenSource(100); // Run for 100ms
+        var cts = new CancellationTokenSource(100); 
 
-        // Act
         await worker.StartAsync(cts.Token);
 
-        // Assert
         var expectedSubject = $"Alerta de Venda - {petr4.Ticker}";
         var expectedBody = $"O preço de {petr4.Ticker} subiu para {prices[petr4.Ticker]:F2}, acima do seu alvo de {petr4.SellPrice:F2}.";
         
@@ -90,7 +85,6 @@ public class StockMonitorWorkerTests
             n => n.SendNotificationAsync(expectedSubject, expectedBody),
             Times.Once);
         
-        // Ensure no alert was sent for the other ticker
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(It.Is<string>(s => s.Contains(vale3.Ticker)), It.IsAny<string>()),
             Times.Never);
@@ -99,7 +93,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Não deve enviar notificação quando os preços estão estáveis")]
     public async Task ExecuteAsync_WhenPricesAreStable_ShouldNotSendNotification()
     {
-        // Arrange
         var prices = new Dictionary<string, decimal>
         {
             { "PETR4.SA", 28m },
@@ -111,10 +104,8 @@ public class StockMonitorWorkerTests
         var worker = CreateWorker(_monitorSettings);
         var cts = new CancellationTokenSource(100);
 
-        // Act
         await worker.StartAsync(cts.Token);
 
-        // Assert
         _mockNotificationService.Verify(
             n => n.SendNotificationAsync(It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
@@ -123,7 +114,6 @@ public class StockMonitorWorkerTests
     [Fact(DisplayName = "Deve chamar os serviços para cada ativo com preço")]
     public async Task ExecuteAsync_WithValidPrices_ShouldCallServicesForEachTicker()
     {
-        // Arrange
         var prices = new Dictionary<string, decimal>
         {
             { "PETR4.SA", 28m },
@@ -135,16 +125,12 @@ public class StockMonitorWorkerTests
         var worker = CreateWorker(_monitorSettings);
         var cts = new CancellationTokenSource(100);
 
-        // Act
         await worker.StartAsync(cts.Token);
 
-        // Assert
-        // Verify SMA was calculated for both
         _mockTechnicalAnalysisService.Verify(
             t => t.CalculateSma(It.IsAny<List<decimal>>(), It.IsAny<int>()),
             Times.Exactly(2));
 
-        // Verify the data table was displayed with data for both
         _mockChartService.Verify(
             c => c.DisplayDataTable(It.Is<IEnumerable<StockTickData>>(d => d.Count() == 2)),
             Times.Once);
